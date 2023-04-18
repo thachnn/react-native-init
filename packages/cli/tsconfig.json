@@ -1,18 +1,14 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "emitDeclarationOnly": false,
     "rootDir": "src",
     "outDir": "build"
   },
+  "include": ["src/*.ts", "src/tools/*", "src/commands/init/**/*"],
   "references": [
-    {"path": "../cli-clean"},
-    {"path": "../cli-config"},
     {"path": "../cli-doctor"},
-    {"path": "../cli-hermes"},
-    {"path": "../cli-plugin-metro"},
-    {"path": "../cli-server-api"},
     {"path": "../cli-types"},
-    {"path": "../cli-debugger-ui"},
     {"path": "../cli-tools"}
   ]
 }
