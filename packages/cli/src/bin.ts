@@ -3,10 +3,10 @@
 import './tools/gracefulifyFs';
 import semver from 'semver';
 import chalk from 'chalk';
-import {versionRanges} from '@react-native-community/cli-doctor';
+const versionRanges = {NODE_JS: require('../../../package.json').engines.node};
 
+import {run} from './';
 if (semver.satisfies(process.version, versionRanges.NODE_JS)) {
-  const {run} = require('./');
   run();
 } else {
   console.error(

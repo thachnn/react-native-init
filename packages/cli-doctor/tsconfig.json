@@ -1,13 +1,16 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "emitDeclarationOnly": false,
     "rootDir": "src",
     "outDir": "build"
   },
-  "references": [
-    {"path": "../cli-tools"},
-    {"path": "../cli-types"},
-    {"path": "../cli-config"},
-    {"path": "../cli-platform-ios"}
-  ]
+  "include": [
+    "src/*.ts",
+    "src/tools/installPods.*",
+    "src/tools/runBundle*",
+    "src/tools/brew*",
+    "src/tools/healthchecks/common.*"
+  ],
+  "references": [{"path": "../cli-tools"}]
 }
