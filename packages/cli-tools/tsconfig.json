@@ -1,9 +1,0 @@
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "emitDeclarationOnly": false,
-    "rootDir": "src",
-    "outDir": "build"
-  },
-  "include": ["src/index.*", "src/errors.*", "src/logger.*", "src/loader.*"]
-}
