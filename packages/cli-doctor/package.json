@@ -8,20 +8,11 @@
   },
   "types": "build/index.d.ts",
   "dependencies": {
-    "@react-native-community/cli-config": "^10.1.1",
-    "@react-native-community/cli-platform-ios": "^10.2.1",
     "@react-native-community/cli-tools": "^10.1.1",
     "chalk": "^4.1.2",
-    "command-exists": "^1.2.8",
-    "envinfo": "^7.7.2",
     "execa": "^1.0.0",
-    "hermes-profile-transformer": "^0.0.6",
-    "ip": "^1.1.5",
-    "node-stream-zip": "^1.9.1",
-    "ora": "^5.4.1",
     "prompts": "^2.4.0",
-    "semver": "^6.3.0",
-    "strip-ansi": "^5.2.0",
+    "strip-ansi": "^6.0.0",
     "sudo-prompt": "^9.0.0",
     "wcwidth": "^1.0.1"
   },
@@ -31,12 +22,9 @@
     "!*.map"
   ],
   "devDependencies": {
-    "@react-native-community/cli-types": "^10.0.0",
-    "@types/command-exists": "^1.2.0",
-    "@types/envinfo": "^7.8.1",
-    "@types/ip": "^1.1.0",
+    "ora": "^5.4.1",
+    "@types/execa": "^0.9.0",
     "@types/prompts": "^2.0.9",
-    "@types/semver": "^6.0.2",
     "@types/wcwidth": "^1.0.0"
   },
   "homepage": "https://github.com/react-native-community/cli/tree/master/packages/cli-doctor",

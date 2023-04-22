@@ -11,10 +11,10 @@ type Options = {
 const packageManagers = {
   yarn: {
     init: ['init', '-y'],
-    install: ['add'],
-    installDev: ['add', '-D'],
+    install: ['add', '--ignore-engines'],
+    installDev: ['add', '-D', '--ignore-engines'],
     uninstall: ['remove'],
-    installAll: ['install'],
+    installAll: ['install', '--ignore-engines'],
   },
   npm: {
     init: ['init', '-y'],

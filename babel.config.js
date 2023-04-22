@@ -1,23 +1,27 @@
+'use strict';
+
+const [targetNode] = /\d+(\.\d+)?/.exec(
+  require('./package.json').engines.node, //
+);
+
 module.exports = {
-  babelrcRoots: ['packages/*'],
   overrides: [
     {
       presets: ['@babel/preset-typescript'],
       test: '**/*.ts',
     },
+    {
+      plugins: ['@babel/preset-env/plugins/transform-modules-commonjs'],
+      test: './node_modules/**/*.js',
+    },
   ],
   presets: [
     [
-      require.resolve('@babel/preset-env'),
+      '@babel/preset-env',
       {
-        targets: {node: '14'},
-        useBuiltIns: 'entry',
-        corejs: '2.x',
+        targets: {node: targetNode},
+        modules: false, //
       },
     ],
   ],
-  plugins: [
-    [require.resolve('@babel/plugin-transform-modules-commonjs'), {lazy: true}],
-  ],
-  sourceMaps: true,
 };
