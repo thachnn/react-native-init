@@ -6337,7 +6337,7 @@
     },
     5478: module => {
       module.exports = {
-        i8: "10.1.3"
+        i8: "10.2.2"
       };
     }
   }, __webpack_module_cache__ = {};
@@ -6569,10 +6569,83 @@
     function shouldIgnoreFile(filePath) {
       return filePath.match(/node_modules|yarn.lock|package-lock.json/g);
     }
+    function isIosFile(filePath) {
+      return filePath.includes("ios");
+    }
     const UNDERSCORED_DOTFILES = [ "buckconfig", "eslintrc.js", "flowconfig", "gitattributes", "gitignore", "prettierrc.js", "watchmanconfig", "editorconfig", "bundle", "ruby-version", "node-version", "xcode.env" ];
     async function processDotfiles(filePath) {
       const dotfile = UNDERSCORED_DOTFILES.find((e => filePath.includes(`_${e}`)));
       void 0 !== dotfile && await renameFile(filePath, `_${dotfile}`, `.${dotfile}`);
+    }
+    function getPackageNameDetails(packageName) {
+      const cleanPackageName = packageName.replace(/[^\p{L}\p{N}.]+/gu, ""), packageNameArray = cleanPackageName.split("."), [prefix, ...segments] = packageNameArray;
+      return {
+        cleanPackageName,
+        packageNameArray,
+        prefix,
+        segments,
+        startsWithCom: "com" === prefix
+      };
+    }
+    async function createAndroidPackagePaths(filePath, packageName) {
+      const {startsWithCom, segments, packageNameArray} = getPackageNameDetails(packageName), pathFolders = filePath.split("/").slice(-2);
+      if ("java" === pathFolders[0] && "com" === pathFolders[1]) {
+        const segmentsList = startsWithCom ? segments : packageNameArray;
+        if (segmentsList.length > 1) {
+          const initialDir = process.cwd();
+          process.chdir(filePath);
+          try {
+            await editTemplate_fs.rename(`${filePath}/${segmentsList.join(".")}`, `${filePath}/${segmentsList[segmentsList.length - 1]}`);
+            for (const segment of segmentsList) editTemplate_fs.mkdirSync(segment), process.chdir(segment);
+            await editTemplate_fs.rename(`${filePath}/${segmentsList[segmentsList.length - 1]}`, process.cwd());
+          } catch {
+            throw "Failed to create correct paths for Android.";
+          }
+          process.chdir(initialDir);
+        }
+      }
+    }
+    async function changePlaceholderInTemplate({projectName, placeholderName, placeholderTitle = "Hello App Display Name", projectTitle = projectName, packageName}) {
+      if (logger_debug(`Changing ${placeholderName} for ${projectName} in template`), 
+      packageName) try {
+        await async function({projectName, placeholderName, placeholderTitle, packageName}) {
+          !function(packageName) {
+            if (packageName.split(".").length < 2) throw `The package name ${packageName} is invalid. It should contain at least two segments, e.g. com.app`;
+            if (!/^([a-zA-Z]([a-zA-Z0-9_])*\.)+[a-zA-Z]([a-zA-Z0-9_])*$/u.test(packageName)) throw `The ${packageName} package name is not valid. It can contain only alphanumeric characters and dots.`;
+          }(packageName);
+          const {cleanPackageName, segments, startsWithCom} = getPackageNameDetails(packageName);
+          for (const filePath of tools_walk(process.cwd()).reverse()) {
+            if (shouldIgnoreFile(filePath)) continue;
+            const iosFile = isIosFile(filePath);
+            if (!(await editTemplate_fs.stat(filePath)).isDirectory()) {
+              let newName = startsWithCom ? cleanPackageName : `com.${cleanPackageName}`;
+              iosFile && (newName = projectName), await replaceNameInUTF8File(filePath, `PRODUCT_BUNDLE_IDENTIFIER = "${startsWithCom ? cleanPackageName : `com.${cleanPackageName}`}"`, 'PRODUCT_BUNDLE_IDENTIFIER = "(.*)"'), 
+              filePath.includes("app.json") ? await replaceNameInUTF8File(filePath, projectName, placeholderName) : (await replaceNameInUTF8File(filePath, `return "${projectName}"`, `return "${placeholderName}"`), 
+              await replaceNameInUTF8File(filePath, `<string name="app_name">${projectName}</string>`, `<string name="app_name">${placeholderTitle}</string>`), 
+              await replaceNameInUTF8File(filePath, newName, `com.${placeholderName}`), await replaceNameInUTF8File(filePath, newName, placeholderName), 
+              await replaceNameInUTF8File(filePath, newName, placeholderTitle));
+            }
+            let fileName = startsWithCom ? segments.join(".") : cleanPackageName;
+            shouldRenameFile(filePath, placeholderName) ? (iosFile && (fileName = projectName), 
+            await renameFile(filePath, placeholderName, fileName)) : shouldRenameFile(filePath, placeholderName.toLowerCase()) && await renameFile(filePath, placeholderName.toLowerCase(), fileName.toLowerCase());
+            try {
+              await createAndroidPackagePaths(filePath, packageName);
+            } catch (error) {
+              throw new CLIError("Failed to create correct paths for Android.");
+            }
+            await processDotfiles(filePath);
+          }
+        }({
+          projectName,
+          placeholderName,
+          placeholderTitle,
+          packageName
+        });
+      } catch (error) {
+        throw new CLIError(error);
+      } else for (const filePath of tools_walk(process.cwd()).reverse()) shouldIgnoreFile(filePath) || ((await editTemplate_fs.stat(filePath)).isDirectory() || (await replaceNameInUTF8File(filePath, projectName, placeholderName), 
+      await replaceNameInUTF8File(filePath, projectTitle, placeholderTitle)), shouldRenameFile(filePath, placeholderName) ? await renameFile(filePath, placeholderName, projectName) : shouldRenameFile(filePath, placeholderName.toLowerCase()) && await renameFile(filePath, placeholderName.toLowerCase(), projectName.toLowerCase()), 
+      await processDotfiles(filePath));
     }
     const runBundleInstall_execa = __webpack_require__(8468);
     const tools_runBundleInstall = async function(loader) {
@@ -6711,7 +6784,7 @@
       }
       return process.cwd();
     }
-    async function createFromTemplate({projectName, templateUri, npm, directory, projectTitle, skipInstall}) {
+    async function createFromTemplate({projectName, templateUri, npm, directory, projectTitle, skipInstall, packageName}) {
       logger_debug("Initializing new project"), logger_log(banner);
       const projectDirectory = await setProjectDirectory(directory), loader = (options = {
         text: "Downloading template"
@@ -6735,16 +6808,12 @@
             exclude: [ new RegExp((string = regexStr, "\\" === replacePathSepForRegex_path.sep ? string.replace(/(\/|(.)?\\(?![[\]{}()*+?.^$|\\]))/g, ((_match, _, p2) => p2 && "\\" !== p2 ? p2 + "\\\\" : "\\\\")) : string)) ]
           });
         }(templateName, templateConfig.templateDir, templateSourceDir), loader.succeed(), 
-        loader.start("Processing template"), await async function({projectName, placeholderName, placeholderTitle = "Hello App Display Name", projectTitle = projectName}) {
-          logger_debug(`Changing ${placeholderName} for ${projectName} in template`);
-          for (const filePath of tools_walk(process.cwd()).reverse()) shouldIgnoreFile(filePath) || ((await editTemplate_fs.stat(filePath)).isDirectory() || (await replaceNameInUTF8File(filePath, projectName, placeholderName), 
-          await replaceNameInUTF8File(filePath, projectTitle, placeholderTitle)), shouldRenameFile(filePath, placeholderName) ? await renameFile(filePath, placeholderName, projectName) : shouldRenameFile(filePath, placeholderName.toLowerCase()) && await renameFile(filePath, placeholderName.toLowerCase(), projectName.toLowerCase()), 
-          await processDotfiles(filePath));
-        }({
+        loader.start("Processing template"), await changePlaceholderInTemplate({
           projectName,
           projectTitle,
           placeholderName: templateConfig.placeholderName,
-          placeholderTitle: templateConfig.titlePlaceholder
+          placeholderTitle: templateConfig.titlePlaceholder,
+          packageName
         }), loader.succeed();
         const {postInitScript} = templateConfig;
         postInitScript && (loader.info("Executing post init script "), await function(templateName, postInitScript, templateSourceDir) {
@@ -6788,7 +6857,8 @@
         npm: options.npm,
         directory,
         projectTitle: options.title,
-        skipInstall: options.skipInstall
+        skipInstall: options.skipInstall,
+        packageName: options.packageName
       });
     }
     const commands_init = {
@@ -6825,6 +6895,9 @@
       }, {
         name: "--skip-install",
         description: "Skips dependencies installation step"
+      }, {
+        name: "--package-name <string>",
+        description: "Inits a project with a custom package name (Android) and bundle ID (iOS), e.g. com.example.app"
       } ]
     }, src_chalk = __webpack_require__(4061), {Command: CommanderCommand} = __webpack_require__(9903), detachedCommands = [ commands_init ], pkgVersion = __webpack_require__(5478).i8, program = (new CommanderCommand).version(pkgVersion, "-v", "Output the current version").option("--verbose", "Increase logging verbosity"), handleError = err => {
       if (logger_enable(), program.opts().verbose) logger_error(err.message); else {

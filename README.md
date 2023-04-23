@@ -28,6 +28,13 @@ Uses a custom directory instead of `<projectName>`.
 
 Uses a custom app title instead of `<projectName>`.
 
+#### `--package-name <string>`
+
+Create project with custom package name for Android and bundle identifier for iOS. The correct package name should:
+
+- Contain at least two segments separated by dots, e.g. `com.example`
+- Contain only alphanumeric characters and dots
+
 #### `--skip-install`
 
 Skip dependencies installation
