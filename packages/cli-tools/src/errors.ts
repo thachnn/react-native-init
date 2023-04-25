@@ -22,7 +22,6 @@ export class CLIError extends Error {
 /**
  * Raised when we're unable to find a package.json
  */
-export class UnknownProjectError extends Error {}
 
 export const inlineString = (str: string) =>
   str.replace(/(\s{2,})/gm, ' ').trim();

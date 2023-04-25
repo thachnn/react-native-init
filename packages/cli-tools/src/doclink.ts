@@ -86,10 +86,6 @@ function doclink(
 }
 
 export const docs = doclink.bind(null, 'docs');
-export const contributing = doclink.bind(null, 'contributing');
-export const community = doclink.bind(null, 'community');
-export const showcase = doclink.bind(null, 'showcase');
-export const blog = doclink.bind(null, 'blog');
 
 /**
  * When the user builds, we should define the target platform globally.
