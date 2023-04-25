@@ -6234,7 +6234,7 @@
     },
     5478: module => {
       module.exports = {
-        i8: "11.0.2"
+        i8: "11.1.3"
       };
     }
   }, __webpack_module_cache__ = {};
@@ -6317,7 +6317,7 @@
     }
     const NoopLoader = OraNoop, os = __webpack_require__(2037), assert = __webpack_require__(9491);
     let _version, _platform = "android";
-    function doclink(section, path, hashOrOverrides) {
+    const docs = function(section, path, hashOrOverrides) {
       const url = new URL("https://reactnative.dev/"), isObj = "object" == typeof hashOrOverrides, hash = isObj ? hashOrOverrides.hash : hashOrOverrides, version = isObj && hashOrOverrides.version ? hashOrOverrides.version : _version, OS = isObj && hashOrOverrides.os ? hashOrOverrides.os : function() {
         switch (os.platform()) {
          case "aix":
@@ -6344,8 +6344,7 @@
       }
       return hash && (assert.doesNotMatch(hash, /#/, "Anchor links should be written withou a '#'"), 
       url.hash = hash), url.toString();
-    }
-    const docs = doclink.bind(null, "docs");
+    }.bind(null, "docs");
     class CLIError extends Error {
       constructor(msg, originalError) {
         super(inlineString(msg)), originalError ? this.stack = "string" == typeof originalError ? originalError : originalError.stack || "".split("\n").slice(0, 2).join("\n") : delete this.stack;
