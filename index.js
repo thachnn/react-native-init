@@ -538,320 +538,6 @@
         return conversion;
       };
     },
-    1473: (module, __unused_webpack_exports, __webpack_require__) => {
-      const readline = __webpack_require__(4521), {action} = __webpack_require__(8810), EventEmitter = __webpack_require__(2361), {beep, cursor} = __webpack_require__(2698), color = __webpack_require__(1391);
-      module.exports = class extends EventEmitter {
-        constructor(opts = {}) {
-          super(), this.firstRender = !0, this.in = opts.stdin || process.stdin, this.out = opts.stdout || process.stdout, 
-          this.onRender = (opts.onRender || (() => {})).bind(this);
-          const rl = readline.createInterface({
-            input: this.in,
-            escapeCodeTimeout: 50
-          });
-          readline.emitKeypressEvents(this.in, rl), this.in.isTTY && this.in.setRawMode(!0);
-          const isSelect = [ "SelectPrompt", "MultiselectPrompt" ].indexOf(this.constructor.name) > -1, keypress = (str, key) => {
-            let a = action(key, isSelect);
-            !1 === a ? this._ && this._(str, key) : "function" == typeof this[a] ? this[a](key) : this.bell();
-          };
-          this.close = () => {
-            this.out.write(cursor.show), this.in.removeListener("keypress", keypress), this.in.isTTY && this.in.setRawMode(!1), 
-            rl.close(), this.emit(this.aborted ? "abort" : this.exited ? "exit" : "submit", this.value), 
-            this.closed = !0;
-          }, this.in.on("keypress", keypress);
-        }
-        fire() {
-          this.emit("state", {
-            value: this.value,
-            aborted: !!this.aborted,
-            exited: !!this.exited
-          });
-        }
-        bell() {
-          this.out.write(beep);
-        }
-        render() {
-          this.onRender(color), this.firstRender && (this.firstRender = !1);
-        }
-      };
-    },
-    1595: (module, __unused_webpack_exports, __webpack_require__) => {
-      const color = __webpack_require__(1391), Prompt = __webpack_require__(1473), {style, clear, figures, wrap, entriesToDisplay} = __webpack_require__(8810), {cursor} = __webpack_require__(2698);
-      module.exports = class extends Prompt {
-        constructor(opts = {}) {
-          super(opts), this.msg = opts.message, this.hint = opts.hint || "- Use arrow-keys. Return to submit.", 
-          this.warn = opts.warn || "- This option is disabled", this.cursor = opts.initial || 0, 
-          this.choices = opts.choices.map(((ch, idx) => ("string" == typeof ch && (ch = {
-            title: ch,
-            value: idx
-          }), {
-            title: ch && (ch.title || ch.value || ch),
-            value: ch && (void 0 === ch.value ? idx : ch.value),
-            description: ch && ch.description,
-            selected: ch && ch.selected,
-            disabled: ch && ch.disabled
-          }))), this.optionsPerPage = opts.optionsPerPage || 10, this.value = (this.choices[this.cursor] || {}).value, 
-          this.clear = clear("", this.out.columns), this.render();
-        }
-        moveCursor(n) {
-          this.cursor = n, this.value = this.choices[n].value, this.fire();
-        }
-        reset() {
-          this.moveCursor(0), this.fire(), this.render();
-        }
-        exit() {
-          this.abort();
-        }
-        abort() {
-          this.done = this.aborted = !0, this.fire(), this.render(), this.out.write("\n"), 
-          this.close();
-        }
-        submit() {
-          this.selection.disabled ? this.bell() : (this.done = !0, this.aborted = !1, this.fire(), 
-          this.render(), this.out.write("\n"), this.close());
-        }
-        first() {
-          this.moveCursor(0), this.render();
-        }
-        last() {
-          this.moveCursor(this.choices.length - 1), this.render();
-        }
-        up() {
-          0 === this.cursor ? this.moveCursor(this.choices.length - 1) : this.moveCursor(this.cursor - 1), 
-          this.render();
-        }
-        down() {
-          this.cursor === this.choices.length - 1 ? this.moveCursor(0) : this.moveCursor(this.cursor + 1), 
-          this.render();
-        }
-        next() {
-          this.moveCursor((this.cursor + 1) % this.choices.length), this.render();
-        }
-        _(c, key) {
-          if (" " === c) return this.submit();
-        }
-        get selection() {
-          return this.choices[this.cursor];
-        }
-        render() {
-          if (this.closed) return;
-          this.firstRender ? this.out.write(cursor.hide) : this.out.write(clear(this.outputText, this.out.columns)), 
-          super.render();
-          let {startIndex, endIndex} = entriesToDisplay(this.cursor, this.choices.length, this.optionsPerPage);
-          if (this.outputText = [ style.symbol(this.done, this.aborted), color.bold(this.msg), style.delimiter(!1), this.done ? this.selection.title : this.selection.disabled ? color.yellow(this.warn) : color.gray(this.hint) ].join(" "), 
-          !this.done) {
-            this.outputText += "\n";
-            for (let i = startIndex; i < endIndex; i++) {
-              let title, prefix, desc = "", v = this.choices[i];
-              prefix = i === startIndex && startIndex > 0 ? figures.arrowUp : i === endIndex - 1 && endIndex < this.choices.length ? figures.arrowDown : " ", 
-              v.disabled ? (title = this.cursor === i ? color.gray().underline(v.title) : color.strikethrough().gray(v.title), 
-              prefix = (this.cursor === i ? color.bold().gray(figures.pointer) + " " : "  ") + prefix) : (title = this.cursor === i ? color.cyan().underline(v.title) : v.title, 
-              prefix = (this.cursor === i ? color.cyan(figures.pointer) + " " : "  ") + prefix, 
-              v.description && this.cursor === i && (desc = ` - ${v.description}`, (prefix.length + title.length + desc.length >= this.out.columns || v.description.split(/\r?\n/).length > 1) && (desc = "\n" + wrap(v.description, {
-                margin: 3,
-                width: this.out.columns
-              })))), this.outputText += `${prefix} ${title}${color.gray(desc)}\n`;
-            }
-          }
-          this.out.write(this.outputText);
-        }
-      };
-    },
-    1954: (module, __unused_webpack_exports, __webpack_require__) => {
-      const prompts = __webpack_require__(8024), passOn = [ "suggest", "format", "onState", "validate", "onRender", "type" ], noop = () => {};
-      async function prompt(questions = [], {onSubmit = noop, onCancel = noop} = {}) {
-        const answers = {}, override = prompt._override || {};
-        let answer, question, quit, name, type, lastPrompt;
-        questions = [].concat(questions);
-        const getFormattedAnswer = async (question, answer, skipValidation = !1) => {
-          if (skipValidation || !question.validate || !0 === question.validate(answer)) return question.format ? await question.format(answer, answers) : answer;
-        };
-        for (question of questions) if (({name, type} = question), "function" == typeof type && (type = await type(answer, {
-          ...answers
-        }, question), question.type = type), type) {
-          for (let key in question) {
-            if (passOn.includes(key)) continue;
-            let value = question[key];
-            question[key] = "function" == typeof value ? await value(answer, {
-              ...answers
-            }, lastPrompt) : value;
-          }
-          if (lastPrompt = question, "string" != typeof question.message) throw new Error("prompt message is required");
-          if (({name, type} = question), void 0 === prompts[type]) throw new Error(`prompt type (${type}) is not defined`);
-          if (void 0 === override[question.name] || (answer = await getFormattedAnswer(question, override[question.name]), 
-          void 0 === answer)) {
-            try {
-              answer = prompt._injected ? getInjectedAnswer(prompt._injected, question.initial) : await prompts[type](question), 
-              answers[name] = answer = await getFormattedAnswer(question, answer, !0), quit = await onSubmit(question, answer, answers);
-            } catch (err) {
-              quit = !await onCancel(question, answers);
-            }
-            if (quit) return answers;
-          } else answers[name] = answer;
-        }
-        return answers;
-      }
-      function getInjectedAnswer(injected, deafultValue) {
-        const answer = injected.shift();
-        if (answer instanceof Error) throw answer;
-        return void 0 === answer ? deafultValue : answer;
-      }
-      module.exports = Object.assign(prompt, {
-        prompt,
-        prompts,
-        inject: function(answers) {
-          prompt._injected = (prompt._injected || []).concat(answers);
-        },
-        override: function(answers) {
-          prompt._override = Object.assign({}, answers);
-        }
-      });
-    },
-    831: module => {
-      module.exports = (key, isSelect) => {
-        if (!key.meta || "escape" === key.name) {
-          if (key.ctrl) {
-            if ("a" === key.name) return "first";
-            if ("c" === key.name) return "abort";
-            if ("d" === key.name) return "abort";
-            if ("e" === key.name) return "last";
-            if ("g" === key.name) return "reset";
-          }
-          if (isSelect) {
-            if ("j" === key.name) return "down";
-            if ("k" === key.name) return "up";
-          }
-          return "return" === key.name || "enter" === key.name ? "submit" : "backspace" === key.name ? "delete" : "delete" === key.name ? "deleteForward" : "abort" === key.name ? "abort" : "escape" === key.name ? "exit" : "tab" === key.name ? "next" : "pagedown" === key.name ? "nextPage" : "pageup" === key.name ? "prevPage" : "home" === key.name ? "home" : "end" === key.name ? "end" : "up" === key.name ? "up" : "down" === key.name ? "down" : "right" === key.name ? "right" : "left" === key.name && "left";
-        }
-      };
-    },
-    6577: (module, __unused_webpack_exports, __webpack_require__) => {
-      const strip = __webpack_require__(2723), {erase, cursor} = __webpack_require__(2698);
-      module.exports = function(prompt, perLine) {
-        if (!perLine) return erase.line + cursor.to(0);
-        let rows = 0;
-        const lines = prompt.split(/\r?\n/);
-        for (let line of lines) rows += 1 + Math.floor(Math.max([ ...strip(line) ].length - 1, 0) / perLine);
-        return erase.lines(rows);
-      };
-    },
-    6473: module => {
-      module.exports = (cursor, total, maxVisible) => {
-        maxVisible = maxVisible || total;
-        let startIndex = Math.min(total - maxVisible, cursor - Math.floor(maxVisible / 2));
-        return startIndex < 0 && (startIndex = 0), {
-          startIndex,
-          endIndex: Math.min(startIndex + maxVisible, total)
-        };
-      };
-    },
-    2286: module => {
-      const main = {
-        arrowUp: "↑",
-        arrowDown: "↓",
-        arrowLeft: "←",
-        arrowRight: "→",
-        radioOn: "◉",
-        radioOff: "◯",
-        tick: "✔",
-        cross: "✖",
-        ellipsis: "…",
-        pointerSmall: "›",
-        line: "─",
-        pointer: "❯"
-      }, win = {
-        arrowUp: main.arrowUp,
-        arrowDown: main.arrowDown,
-        arrowLeft: main.arrowLeft,
-        arrowRight: main.arrowRight,
-        radioOn: "(*)",
-        radioOff: "( )",
-        tick: "√",
-        cross: "×",
-        ellipsis: "...",
-        pointerSmall: "»",
-        line: "─",
-        pointer: ">"
-      }, figures = "win32" === process.platform ? win : main;
-      module.exports = figures;
-    },
-    8810: (module, __unused_webpack_exports, __webpack_require__) => {
-      module.exports = {
-        action: __webpack_require__(831),
-        clear: __webpack_require__(6577),
-        style: __webpack_require__(7252),
-        strip: __webpack_require__(2723),
-        figures: __webpack_require__(2286),
-        lines: __webpack_require__(2146),
-        wrap: __webpack_require__(1563),
-        entriesToDisplay: __webpack_require__(6473)
-      };
-    },
-    2146: (module, __unused_webpack_exports, __webpack_require__) => {
-      const strip = __webpack_require__(2723);
-      module.exports = function(msg, perLine) {
-        let lines = String(strip(msg) || "").split(/\r?\n/);
-        return perLine ? lines.map((l => Math.ceil(l.length / perLine))).reduce(((a, b) => a + b)) : lines.length;
-      };
-    },
-    2723: module => {
-      module.exports = str => {
-        const pattern = [ "[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[a-zA-Z\\d]*)*)?\\u0007)", "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PRZcf-ntqry=><~]))" ].join("|"), RGX = new RegExp(pattern, "g");
-        return "string" == typeof str ? str.replace(RGX, "") : str;
-      };
-    },
-    7252: (module, __unused_webpack_exports, __webpack_require__) => {
-      const c = __webpack_require__(1391), figures = __webpack_require__(2286), styles = Object.freeze({
-        password: {
-          scale: 1,
-          render: input => "*".repeat(input.length)
-        },
-        emoji: {
-          scale: 2,
-          render: input => "😃".repeat(input.length)
-        },
-        invisible: {
-          scale: 0,
-          render: input => ""
-        },
-        default: {
-          scale: 1,
-          render: input => `${input}`
-        }
-      }), symbols = Object.freeze({
-        aborted: c.red(figures.cross),
-        done: c.green(figures.tick),
-        exited: c.yellow(figures.cross),
-        default: c.cyan("?")
-      });
-      module.exports = {
-        styles,
-        render: type => styles[type] || styles.default,
-        symbols,
-        symbol: (done, aborted, exited) => aborted ? symbols.aborted : exited ? symbols.exited : done ? symbols.done : symbols.default,
-        delimiter: completing => c.gray(completing ? figures.ellipsis : figures.pointerSmall),
-        item: (expandable, expanded) => c.gray(expandable ? expanded ? figures.pointerSmall : "+" : figures.line)
-      };
-    },
-    1563: module => {
-      module.exports = (msg, opts = {}) => {
-        const tab = Number.isSafeInteger(parseInt(opts.margin)) ? new Array(parseInt(opts.margin)).fill(" ").join("") : opts.margin || "", width = opts.width;
-        return (msg || "").split(/\r?\n/g).map((line => line.split(/\s+/g).reduce(((arr, w) => (w.length + tab.length >= width || arr[arr.length - 1].length + w.length + 1 < width ? arr[arr.length - 1] += ` ${w}` : arr.push(`${tab}${w}`), 
-        arr)), [ tab ]).join("\n"))).join("\n");
-      };
-    },
-    8024: (__unused_webpack_module, exports, __webpack_require__) => {
-      const $ = exports, el = {
-        SelectPrompt: __webpack_require__(1595)
-      }, noop = v => v;
-      function toPrompt(type, args, opts = {}) {
-        return new Promise(((res, rej) => {
-          const p = new el[type](args), onAbort = opts.onAbort || noop, onSubmit = opts.onSubmit || noop, onExit = opts.onExit || noop;
-          p.on("state", args.onState || noop), p.on("submit", (x => res(onSubmit(x)))), p.on("exit", (x => res(onExit(x)))), 
-          p.on("abort", (x => rej(onAbort(x))));
-        }));
-      }
-      $.select = args => toPrompt("SelectPrompt", args);
-    },
     9668: (module, __unused_webpack_exports, __webpack_require__) => {
       const {Buffer} = __webpack_require__(4300), symbol = Symbol.for("BufferList");
       function BufferList(buf) {
@@ -1365,41 +1051,8 @@
         yellowgreen: [ 154, 205, 50 ]
       };
     },
-    3743: module => {
-      const isWin = "win32" === process.platform;
-      function notFoundError(original, syscall) {
-        return Object.assign(new Error(`${syscall} ${original.command} ENOENT`), {
-          code: "ENOENT",
-          errno: "ENOENT",
-          syscall: `${syscall} ${original.command}`,
-          path: original.command,
-          spawnargs: original.args
-        });
-      }
-      function verifyENOENT(status, parsed) {
-        return isWin && 1 === status && !parsed.file ? notFoundError(parsed.original, "spawn") : null;
-      }
-      module.exports = {
-        hookChildProcess: function(cp, parsed) {
-          if (!isWin) return;
-          const originalEmit = cp.emit;
-          cp.emit = function(name, arg1) {
-            if ("exit" === name) {
-              const err = verifyENOENT(arg1, parsed);
-              if (err) return originalEmit.call(cp, "error", err);
-            }
-            return originalEmit.apply(cp, arguments);
-          };
-        },
-        verifyENOENT,
-        verifyENOENTSync: function(status, parsed) {
-          return isWin && 1 === status && !parsed.file ? notFoundError(parsed.original, "spawnSync") : null;
-        },
-        notFoundError
-      };
-    },
     4605: (module, __unused_webpack_exports, __webpack_require__) => {
-      const path = __webpack_require__(1017), niceTry = __webpack_require__(1150), resolveCommand = __webpack_require__(2202), escape = __webpack_require__(5081), readShebang = __webpack_require__(7550), semver = __webpack_require__(2079), isWin = "win32" === process.platform, isExecutableRegExp = /\.(?:com|exe)$/i, isCmdShimRegExp = /node_modules[\\/].bin[\\/][^\\/]+\.cmd$/i, supportsShellOption = niceTry((() => semver.satisfies(process.version, "^4.8.0 || ^5.7.0 || >= 6.0.0", !0))) || !1;
+      const path = __webpack_require__(1017), resolveCommand = __webpack_require__(2202), escape = __webpack_require__(5081), readShebang = __webpack_require__(7550), isWin = "win32" === process.platform, isExecutableRegExp = /\.(?:com|exe)$/i, isCmdShimRegExp = /node_modules[\\/].bin[\\/][^\\/]+\.cmd$/i;
       function parseNonShell(parsed) {
         if (!isWin) return parsed;
         const commandFile = function(parsed) {
@@ -1429,13 +1082,7 @@
             args
           }
         };
-        return options.shell ? function(parsed) {
-          if (supportsShellOption) return parsed;
-          const shellCommand = [ parsed.command ].concat(parsed.args).join(" ");
-          return isWin ? (parsed.command = "string" == typeof parsed.options.shell ? parsed.options.shell : process.env.comspec || "cmd.exe", 
-          parsed.args = [ "/d", "/s", "/c", `"${shellCommand}"` ], parsed.options.windowsVerbatimArguments = !0) : ("string" == typeof parsed.options.shell ? parsed.command = parsed.options.shell : "android" === process.platform ? parsed.command = "/system/bin/sh" : parsed.command = "/bin/sh", 
-          parsed.args = [ "-c", shellCommand ]), parsed;
-        }(parsed) : parseNonShell(parsed);
+        return options.shell ? parsed : parseNonShell(parsed);
       };
     },
     5081: module => {
@@ -1450,8 +1097,8 @@
     7550: (module, __unused_webpack_exports, __webpack_require__) => {
       const fs = __webpack_require__(7147), shebangCommand = __webpack_require__(2063);
       module.exports = function(command) {
-        let buffer, fd;
-        Buffer.alloc ? buffer = Buffer.alloc(150) : (buffer = new Buffer(150), buffer.fill(0));
+        const buffer = Buffer.alloc(150);
+        let fd;
         try {
           fd = fs.openSync(command, "r"), fs.readSync(fd, buffer, 0, 150, 0), fs.closeSync(fd);
         } catch (e) {}
@@ -1459,20 +1106,22 @@
       };
     },
     2202: (module, __unused_webpack_exports, __webpack_require__) => {
-      const path = __webpack_require__(1017), which = __webpack_require__(566), pathKey = __webpack_require__(3024)();
+      const path = __webpack_require__(1017), which = __webpack_require__(566), getPathKey = __webpack_require__(3024);
       function resolveCommandAttempt(parsed, withoutPathExt) {
-        const cwd = process.cwd(), hasCustomCwd = null != parsed.options.cwd;
-        if (hasCustomCwd) try {
+        const env = parsed.options.env || process.env, cwd = process.cwd(), hasCustomCwd = null != parsed.options.cwd, shouldSwitchCwd = hasCustomCwd && void 0 !== process.chdir && !process.chdir.disabled;
+        if (shouldSwitchCwd) try {
           process.chdir(parsed.options.cwd);
         } catch (err) {}
         let resolved;
         try {
           resolved = which.sync(parsed.command, {
-            path: (parsed.options.env || process.env)[pathKey],
+            path: env[getPathKey({
+              env
+            })],
             pathExt: withoutPathExt ? path.delimiter : void 0
           });
         } catch (e) {} finally {
-          process.chdir(cwd);
+          shouldSwitchCwd && process.chdir(cwd);
         }
         return resolved && (resolved = path.resolve(hasCustomCwd ? parsed.options.cwd : "", resolved)), 
         resolved;
@@ -1483,214 +1132,356 @@
     },
     8468: (module, __unused_webpack_exports, __webpack_require__) => {
       const path = __webpack_require__(1017), childProcess = __webpack_require__(2081), crossSpawn = {
-        _parse: __webpack_require__(4605),
-        _enoent: __webpack_require__(3743)
-      }, stripEof = __webpack_require__(4502), npmRunPath = __webpack_require__(6147), isStream = __webpack_require__(4970), _getStream = __webpack_require__(31), pFinally = __webpack_require__(7345), onExit = __webpack_require__(2654), errname = __webpack_require__(8542), stdio = __webpack_require__(3111);
-      function handleArgs(cmd, args, opts) {
-        let parsed;
-        return (opts = Object.assign({
-          extendEnv: !0,
-          env: {}
-        }, opts)).extendEnv && (opts.env = Object.assign({}, process.env, opts.env)), !0 === opts.__winShell ? (delete opts.__winShell, 
-        parsed = {
-          command: cmd,
-          args,
-          options: opts,
-          file: cmd,
-          original: {
-            cmd,
-            args
-          }
-        }) : parsed = crossSpawn._parse(cmd, args, opts), (opts = Object.assign({
-          maxBuffer: 1e7,
+        _parse: __webpack_require__(4605)
+      }, stripFinalNewline = __webpack_require__(8150), npmRunPath = __webpack_require__(6147), onetime = __webpack_require__(7678), makeError = __webpack_require__(4353), normalizeStdio = __webpack_require__(3111), {spawnedKill, spawnedCancel, setupTimeout, validateTimeout, setExitHandler} = __webpack_require__(3820), {handleInput, getSpawnedResult, makeAllStream, validateInputSync} = __webpack_require__(4994), {mergePromise, getSpawnedPromise} = __webpack_require__(1708), {joinCommand, parseCommand, getEscapedCommand} = __webpack_require__(4077), handleArguments = (file, args, options = {}) => {
+        const parsed = crossSpawn._parse(file, args, options);
+        return file = parsed.command, args = parsed.args, (options = {
+          maxBuffer: 1e8,
           buffer: !0,
-          stripEof: !0,
-          preferLocal: !0,
-          localDir: parsed.options.cwd || process.cwd(),
+          stripFinalNewline: !0,
+          extendEnv: !0,
+          preferLocal: !1,
+          localDir: (options = parsed.options).cwd || process.cwd(),
+          execPath: process.execPath,
           encoding: "utf8",
           reject: !0,
-          cleanup: !0
-        }, parsed.options)).stdio = stdio(opts), opts.preferLocal && (opts.env = npmRunPath.env(Object.assign({}, opts, {
-          cwd: opts.localDir
-        }))), opts.detached && (opts.cleanup = !1), "win32" === process.platform && "cmd.exe" === path.basename(parsed.command) && parsed.args.unshift("/q"), 
+          cleanup: !0,
+          all: !1,
+          windowsHide: !0,
+          ...options
+        }).env = (({env: envOption, extendEnv, preferLocal, localDir, execPath}) => {
+          const env = extendEnv ? {
+            ...process.env,
+            ...envOption
+          } : envOption;
+          return preferLocal ? npmRunPath.env({
+            env,
+            cwd: localDir,
+            execPath
+          }) : env;
+        })(options), options.stdio = normalizeStdio(options), "win32" === process.platform && "cmd" === path.basename(file, ".exe") && args.unshift("/q"), 
         {
-          cmd: parsed.command,
-          args: parsed.args,
-          opts,
+          file,
+          args,
+          options,
           parsed
         };
-      }
-      function handleOutput(opts, val) {
-        return val && opts.stripEof && (val = stripEof(val)), val;
-      }
-      function handleShell(fn, cmd, opts) {
-        let file = "/bin/sh", args = [ "-c", cmd ];
-        return opts = Object.assign({}, opts), "win32" === process.platform && (opts.__winShell = !0, 
-        file = process.env.comspec || "cmd.exe", args = [ "/s", "/c", `"${cmd}"` ], opts.windowsVerbatimArguments = !0), 
-        opts.shell && (file = opts.shell, delete opts.shell), fn(file, args, opts);
-      }
-      function getStream(process, stream, {encoding, buffer, maxBuffer}) {
-        if (!process[stream]) return null;
-        let ret;
-        return ret = buffer ? encoding ? _getStream(process[stream], {
-          encoding,
-          maxBuffer
-        }) : _getStream.buffer(process[stream], {
-          maxBuffer
-        }) : new Promise(((resolve, reject) => {
-          process[stream].once("end", resolve).once("error", reject);
-        })), ret.catch((err => {
-          throw err.stream = stream, err.message = `${stream} ${err.message}`, err;
-        }));
-      }
-      function makeError(result, options) {
-        const {stdout, stderr} = result;
-        let err = result.error;
-        const {code, signal} = result, {parsed, joinedCmd} = options, timedOut = options.timedOut || !1;
-        if (!err) {
-          let output = "";
-          Array.isArray(parsed.opts.stdio) ? ("inherit" !== parsed.opts.stdio[2] && (output += output.length > 0 ? stderr : `\n${stderr}`), 
-          "inherit" !== parsed.opts.stdio[1] && (output += `\n${stdout}`)) : "inherit" !== parsed.opts.stdio && (output = `\n${stderr}${stdout}`), 
-          err = new Error(`Command failed: ${joinedCmd}${output}`), err.code = code < 0 ? errname(code) : code;
-        }
-        return err.stdout = stdout, err.stderr = stderr, err.failed = !0, err.signal = signal || null, 
-        err.cmd = joinedCmd, err.timedOut = timedOut, err;
-      }
-      function joinCmd(cmd, args) {
-        let joinedCmd = cmd;
-        return Array.isArray(args) && args.length > 0 && (joinedCmd += " " + args.join(" ")), 
-        joinedCmd;
-      }
-      module.exports = (cmd, args, opts) => {
-        const parsed = handleArgs(cmd, args, opts), {encoding, buffer, maxBuffer} = parsed.opts, joinedCmd = joinCmd(cmd, args);
-        let spawned, removeExitHandler;
+      }, handleOutput = (options, value, error) => "string" == typeof value || Buffer.isBuffer(value) ? options.stripFinalNewline ? stripFinalNewline(value) : value : void 0 === error ? void 0 : "", execa = (file, args, options) => {
+        const parsed = handleArguments(file, args, options), command = joinCommand(file, args), escapedCommand = getEscapedCommand(file, args);
+        let spawned;
+        validateTimeout(parsed.options);
         try {
-          spawned = childProcess.spawn(parsed.cmd, parsed.args, parsed.opts);
-        } catch (err) {
-          return Promise.reject(err);
-        }
-        parsed.opts.cleanup && (removeExitHandler = onExit((() => {
-          spawned.kill();
-        })));
-        let timeoutId = null, timedOut = !1;
-        const cleanup = () => {
-          timeoutId && (clearTimeout(timeoutId), timeoutId = null), removeExitHandler && removeExitHandler();
-        };
-        parsed.opts.timeout > 0 && (timeoutId = setTimeout((() => {
-          timeoutId = null, timedOut = !0, spawned.kill(parsed.opts.killSignal);
-        }), parsed.opts.timeout));
-        const processDone = new Promise((resolve => {
-          spawned.on("exit", ((code, signal) => {
-            cleanup(), resolve({
-              code,
-              signal
-            });
-          })), spawned.on("error", (err => {
-            cleanup(), resolve({
-              error: err
-            });
-          })), spawned.stdin && spawned.stdin.on("error", (err => {
-            cleanup(), resolve({
-              error: err
-            });
+          spawned = childProcess.spawn(parsed.file, parsed.args, parsed.options);
+        } catch (error) {
+          const dummySpawned = new childProcess.ChildProcess, errorPromise = Promise.reject(makeError({
+            error,
+            stdout: "",
+            stderr: "",
+            all: "",
+            command,
+            escapedCommand,
+            parsed,
+            timedOut: !1,
+            isCanceled: !1,
+            killed: !1
           }));
-        }));
-        function destroy() {
-          spawned.stdout && spawned.stdout.destroy(), spawned.stderr && spawned.stderr.destroy();
+          return mergePromise(dummySpawned, errorPromise);
         }
-        const handlePromise = () => pFinally(Promise.all([ processDone, getStream(spawned, "stdout", {
-          encoding,
-          buffer,
-          maxBuffer
-        }), getStream(spawned, "stderr", {
-          encoding,
-          buffer,
-          maxBuffer
-        }) ]).then((arr => {
-          const result = arr[0];
-          if (result.stdout = arr[1], result.stderr = arr[2], result.error || 0 !== result.code || null !== result.signal) {
-            const err = makeError(result, {
-              joinedCmd,
+        const spawnedPromise = getSpawnedPromise(spawned), timedPromise = setupTimeout(spawned, parsed.options, spawnedPromise), processDone = setExitHandler(spawned, parsed.options, timedPromise), context = {
+          isCanceled: !1
+        };
+        spawned.kill = spawnedKill.bind(null, spawned.kill.bind(spawned)), spawned.cancel = spawnedCancel.bind(null, spawned, context);
+        const handlePromiseOnce = onetime((async () => {
+          const [{error, exitCode, signal, timedOut}, stdoutResult, stderrResult, allResult] = await getSpawnedResult(spawned, parsed.options, processDone), stdout = handleOutput(parsed.options, stdoutResult), stderr = handleOutput(parsed.options, stderrResult), all = handleOutput(parsed.options, allResult);
+          if (error || 0 !== exitCode || null !== signal) {
+            const returnedError = makeError({
+              error,
+              exitCode,
+              signal,
+              stdout,
+              stderr,
+              all,
+              command,
+              escapedCommand,
               parsed,
-              timedOut
+              timedOut,
+              isCanceled: context.isCanceled,
+              killed: spawned.killed
             });
-            if (err.killed = err.killed || spawned.killed, !parsed.opts.reject) return err;
-            throw err;
+            if (!parsed.options.reject) return returnedError;
+            throw returnedError;
           }
           return {
-            stdout: handleOutput(parsed.opts, result.stdout),
-            stderr: handleOutput(parsed.opts, result.stderr),
-            code: 0,
+            command,
+            escapedCommand,
+            exitCode: 0,
+            stdout,
+            stderr,
+            all,
             failed: !1,
-            killed: !1,
-            signal: null,
-            cmd: joinedCmd,
-            timedOut: !1
+            timedOut: !1,
+            isCanceled: !1,
+            killed: !1
           };
-        })), destroy);
-        return crossSpawn._enoent.hookChildProcess(spawned, parsed.parsed), function(spawned, input) {
-          null != input && (isStream(input) ? input.pipe(spawned.stdin) : spawned.stdin.end(input));
-        }(spawned, parsed.opts.input), spawned.then = (onfulfilled, onrejected) => handlePromise().then(onfulfilled, onrejected), 
-        spawned.catch = onrejected => handlePromise().catch(onrejected), spawned;
-      }, module.exports.stdout = (...args) => module.exports(...args).then((x => x.stdout)), 
-      module.exports.stderr = (...args) => module.exports(...args).then((x => x.stderr)), 
-      module.exports.shell = (cmd, opts) => handleShell(module.exports, cmd, opts), module.exports.sync = (cmd, args, opts) => {
-        const parsed = handleArgs(cmd, args, opts), joinedCmd = joinCmd(cmd, args);
-        if (isStream(parsed.opts.input)) throw new TypeError("The `input` option cannot be a stream in sync mode");
-        const result = childProcess.spawnSync(parsed.cmd, parsed.args, parsed.opts);
-        if (result.code = result.status, result.error || 0 !== result.status || null !== result.signal) {
-          const err = makeError(result, {
-            joinedCmd,
-            parsed
+        }));
+        return handleInput(spawned, parsed.options.input), spawned.all = makeAllStream(spawned, parsed.options), 
+        mergePromise(spawned, handlePromiseOnce);
+      };
+      module.exports = execa, module.exports.sync = (file, args, options) => {
+        const parsed = handleArguments(file, args, options), command = joinCommand(file, args), escapedCommand = getEscapedCommand(file, args);
+        let result;
+        validateInputSync(parsed.options);
+        try {
+          result = childProcess.spawnSync(parsed.file, parsed.args, parsed.options);
+        } catch (error) {
+          throw makeError({
+            error,
+            stdout: "",
+            stderr: "",
+            all: "",
+            command,
+            escapedCommand,
+            parsed,
+            timedOut: !1,
+            isCanceled: !1,
+            killed: !1
           });
-          if (!parsed.opts.reject) return err;
-          throw err;
+        }
+        const stdout = handleOutput(parsed.options, result.stdout, result.error), stderr = handleOutput(parsed.options, result.stderr, result.error);
+        if (result.error || 0 !== result.status || null !== result.signal) {
+          const error = makeError({
+            stdout,
+            stderr,
+            error: result.error,
+            signal: result.signal,
+            exitCode: result.status,
+            command,
+            escapedCommand,
+            parsed,
+            timedOut: result.error && "ETIMEDOUT" === result.error.code,
+            isCanceled: !1,
+            killed: null !== result.signal
+          });
+          if (!parsed.options.reject) return error;
+          throw error;
         }
         return {
-          stdout: handleOutput(parsed.opts, result.stdout),
-          stderr: handleOutput(parsed.opts, result.stderr),
-          code: 0,
+          command,
+          escapedCommand,
+          exitCode: 0,
+          stdout,
+          stderr,
           failed: !1,
-          signal: null,
-          cmd: joinedCmd,
-          timedOut: !1
+          timedOut: !1,
+          isCanceled: !1,
+          killed: !1
         };
-      }, module.exports.shellSync = (cmd, opts) => handleShell(module.exports.sync, cmd, opts);
+      }, module.exports.command = (command, options) => {
+        const [file, ...args] = parseCommand(command);
+        return execa(file, args, options);
+      }, module.exports.commandSync = (command, options) => {
+        const [file, ...args] = parseCommand(command);
+        return execa.sync(file, args, options);
+      }, module.exports.node = (scriptPath, args, options = {}) => {
+        args && !Array.isArray(args) && "object" == typeof args && (options = args, args = []);
+        const stdio = normalizeStdio.node(options), defaultExecArgv = process.execArgv.filter((arg => !arg.startsWith("--inspect"))), {nodePath = process.execPath, nodeOptions = defaultExecArgv} = options;
+        return execa(nodePath, [ ...nodeOptions, scriptPath, ...Array.isArray(args) ? args : [] ], {
+          ...options,
+          stdin: void 0,
+          stdout: void 0,
+          stderr: void 0,
+          stdio,
+          shell: !1
+        });
+      };
     },
-    8542: (module, __unused_webpack_exports, __webpack_require__) => {
-      const util = __webpack_require__(3837);
-      let uv;
-      if ("function" == typeof util.getSystemErrorName) module.exports = util.getSystemErrorName; else {
-        try {
-          if (uv = process.binding("uv"), "function" != typeof uv.errname) throw new TypeError("uv.errname is not a function");
-        } catch (err) {
-          console.error("execa/lib/errname: unable to establish process.binding('uv')", err), 
-          uv = null;
+    4077: module => {
+      const normalizeArgs = (file, args = []) => Array.isArray(args) ? [ file, ...args ] : [ file ], NO_ESCAPE_REGEXP = /^[\w.-]+$/, DOUBLE_QUOTES_REGEXP = /"/g, SPACES_REGEXP = / +/g;
+      module.exports = {
+        joinCommand: (file, args) => normalizeArgs(file, args).join(" "),
+        getEscapedCommand: (file, args) => normalizeArgs(file, args).map((arg => (arg => "string" != typeof arg || NO_ESCAPE_REGEXP.test(arg) ? arg : `"${arg.replace(DOUBLE_QUOTES_REGEXP, '\\"')}"`)(arg))).join(" "),
+        parseCommand: command => {
+          const tokens = [];
+          for (const token of command.trim().split(SPACES_REGEXP)) {
+            const previousToken = tokens[tokens.length - 1];
+            previousToken && previousToken.endsWith("\\") ? tokens[tokens.length - 1] = `${previousToken.slice(0, -1)} ${token}` : tokens.push(token);
+          }
+          return tokens;
         }
-        module.exports = code => errname(uv, code);
-      }
-      function errname(uv, code) {
-        if (uv) return uv.errname(code);
-        if (!(code < 0)) throw new Error("err >= 0");
-        return `Unknown system error ${code}`;
-      }
-      module.exports.__test__ = errname;
+      };
+    },
+    4353: (module, __unused_webpack_exports, __webpack_require__) => {
+      const {signalsByName} = __webpack_require__(7787);
+      module.exports = ({stdout, stderr, all, error, signal, exitCode, command, escapedCommand, timedOut, isCanceled, killed, parsed: {options: {timeout}}}) => {
+        exitCode = null === exitCode ? void 0 : exitCode;
+        const signalDescription = void 0 === (signal = null === signal ? void 0 : signal) ? void 0 : signalsByName[signal].description, prefix = (({timedOut, timeout, errorCode, signal, signalDescription, exitCode, isCanceled}) => timedOut ? `timed out after ${timeout} milliseconds` : isCanceled ? "was canceled" : void 0 !== errorCode ? `failed with ${errorCode}` : void 0 !== signal ? `was killed with ${signal} (${signalDescription})` : void 0 !== exitCode ? `failed with exit code ${exitCode}` : "failed")({
+          timedOut,
+          timeout,
+          errorCode: error && error.code,
+          signal,
+          signalDescription,
+          exitCode,
+          isCanceled
+        }), execaMessage = `Command ${prefix}: ${command}`, isError = "[object Error]" === Object.prototype.toString.call(error), shortMessage = isError ? `${execaMessage}\n${error.message}` : execaMessage, message = [ shortMessage, stderr, stdout ].filter(Boolean).join("\n");
+        return isError ? (error.originalMessage = error.message, error.message = message) : error = new Error(message), 
+        error.shortMessage = shortMessage, error.command = command, error.escapedCommand = escapedCommand, 
+        error.exitCode = exitCode, error.signal = signal, error.signalDescription = signalDescription, 
+        error.stdout = stdout, error.stderr = stderr, void 0 !== all && (error.all = all), 
+        "bufferedData" in error && delete error.bufferedData, error.failed = !0, error.timedOut = Boolean(timedOut), 
+        error.isCanceled = isCanceled, error.killed = killed && !timedOut, error;
+      };
+    },
+    3820: (module, __unused_webpack_exports, __webpack_require__) => {
+      const os = __webpack_require__(2037), onExit = __webpack_require__(2654), setKillTimeout = (kill, signal, options, killResult) => {
+        if (!shouldForceKill(signal, options, killResult)) return;
+        const timeout = getForceKillAfterTimeout(options), t = setTimeout((() => {
+          kill("SIGKILL");
+        }), timeout);
+        t.unref && t.unref();
+      }, shouldForceKill = (signal, {forceKillAfterTimeout}, killResult) => isSigterm(signal) && !1 !== forceKillAfterTimeout && killResult, isSigterm = signal => signal === os.constants.signals.SIGTERM || "string" == typeof signal && "SIGTERM" === signal.toUpperCase(), getForceKillAfterTimeout = ({forceKillAfterTimeout = !0}) => {
+        if (!0 === forceKillAfterTimeout) return 5e3;
+        if (!Number.isFinite(forceKillAfterTimeout) || forceKillAfterTimeout < 0) throw new TypeError(`Expected the \`forceKillAfterTimeout\` option to be a non-negative integer, got \`${forceKillAfterTimeout}\` (${typeof forceKillAfterTimeout})`);
+        return forceKillAfterTimeout;
+      };
+      module.exports = {
+        spawnedKill: (kill, signal = "SIGTERM", options = {}) => {
+          const killResult = kill(signal);
+          return setKillTimeout(kill, signal, options, killResult), killResult;
+        },
+        spawnedCancel: (spawned, context) => {
+          spawned.kill() && (context.isCanceled = !0);
+        },
+        setupTimeout: (spawned, {timeout, killSignal = "SIGTERM"}, spawnedPromise) => {
+          if (0 === timeout || void 0 === timeout) return spawnedPromise;
+          let timeoutId;
+          const timeoutPromise = new Promise(((resolve, reject) => {
+            timeoutId = setTimeout((() => {
+              ((spawned, signal, reject) => {
+                spawned.kill(signal), reject(Object.assign(new Error("Timed out"), {
+                  timedOut: !0,
+                  signal
+                }));
+              })(spawned, killSignal, reject);
+            }), timeout);
+          })), safeSpawnedPromise = spawnedPromise.finally((() => {
+            clearTimeout(timeoutId);
+          }));
+          return Promise.race([ timeoutPromise, safeSpawnedPromise ]);
+        },
+        validateTimeout: ({timeout}) => {
+          if (void 0 !== timeout && (!Number.isFinite(timeout) || timeout < 0)) throw new TypeError(`Expected the \`timeout\` option to be a non-negative integer, got \`${timeout}\` (${typeof timeout})`);
+        },
+        setExitHandler: async (spawned, {cleanup, detached}, timedPromise) => {
+          if (!cleanup || detached) return timedPromise;
+          const removeExitHandler = onExit((() => {
+            spawned.kill();
+          }));
+          return timedPromise.finally((() => {
+            removeExitHandler();
+          }));
+        }
+      };
+    },
+    1708: module => {
+      const nativePromisePrototype = (async () => {})().constructor.prototype, descriptors = [ "then", "catch", "finally" ].map((property => [ property, Reflect.getOwnPropertyDescriptor(nativePromisePrototype, property) ]));
+      module.exports = {
+        mergePromise: (spawned, promise) => {
+          for (const [property, descriptor] of descriptors) {
+            const value = "function" == typeof promise ? (...args) => Reflect.apply(descriptor.value, promise(), args) : descriptor.value.bind(promise);
+            Reflect.defineProperty(spawned, property, {
+              ...descriptor,
+              value
+            });
+          }
+          return spawned;
+        },
+        getSpawnedPromise: spawned => new Promise(((resolve, reject) => {
+          spawned.on("exit", ((exitCode, signal) => {
+            resolve({
+              exitCode,
+              signal
+            });
+          })), spawned.on("error", (error => {
+            reject(error);
+          })), spawned.stdin && spawned.stdin.on("error", (error => {
+            reject(error);
+          }));
+        }))
+      };
     },
     3111: module => {
-      const alias = [ "stdin", "stdout", "stderr" ];
-      module.exports = opts => {
-        if (!opts) return null;
-        if (opts.stdio && (opts => alias.some((x => Boolean(opts[x]))))(opts)) throw new Error(`It's not possible to provide \`stdio\` in combination with one of ${alias.map((x => `\`${x}\``)).join(", ")}`);
-        if ("string" == typeof opts.stdio) return opts.stdio;
-        const stdio = opts.stdio || [];
+      const aliases = [ "stdin", "stdout", "stderr" ], normalizeStdio = options => {
+        if (!options) return;
+        const {stdio} = options;
+        if (void 0 === stdio) return aliases.map((alias => options[alias]));
+        if ((options => aliases.some((alias => void 0 !== options[alias])))(options)) throw new Error(`It's not possible to provide \`stdio\` in combination with one of ${aliases.map((alias => `\`${alias}\``)).join(", ")}`);
+        if ("string" == typeof stdio) return stdio;
         if (!Array.isArray(stdio)) throw new TypeError(`Expected \`stdio\` to be of type \`string\` or \`Array\`, got \`${typeof stdio}\``);
-        const result = [], len = Math.max(stdio.length, alias.length);
-        for (let i = 0; i < len; i++) {
-          let value = null;
-          void 0 !== stdio[i] ? value = stdio[i] : void 0 !== opts[alias[i]] && (value = opts[alias[i]]), 
-          result[i] = value;
+        const length = Math.max(stdio.length, aliases.length);
+        return Array.from({
+          length
+        }, ((value, index) => stdio[index]));
+      };
+      module.exports = normalizeStdio, module.exports.node = options => {
+        const stdio = normalizeStdio(options);
+        return "ipc" === stdio ? "ipc" : void 0 === stdio || "string" == typeof stdio ? [ stdio, stdio, stdio, "ipc" ] : stdio.includes("ipc") ? stdio : [ ...stdio, "ipc" ];
+      };
+    },
+    4994: (module, __unused_webpack_exports, __webpack_require__) => {
+      const isStream = __webpack_require__(4970), getStream = __webpack_require__(31), mergeStream = __webpack_require__(4034), getBufferedData = async (stream, streamPromise) => {
+        if (stream) {
+          stream.destroy();
+          try {
+            return await streamPromise;
+          } catch (error) {
+            return error.bufferedData;
+          }
         }
-        return result;
+      }, getStreamPromise = (stream, {encoding, buffer, maxBuffer}) => {
+        if (stream && buffer) return encoding ? getStream(stream, {
+          encoding,
+          maxBuffer
+        }) : getStream.buffer(stream, {
+          maxBuffer
+        });
+      };
+      module.exports = {
+        handleInput: (spawned, input) => {
+          void 0 !== input && void 0 !== spawned.stdin && (isStream(input) ? input.pipe(spawned.stdin) : spawned.stdin.end(input));
+        },
+        makeAllStream: (spawned, {all}) => {
+          if (!all || !spawned.stdout && !spawned.stderr) return;
+          const mixed = mergeStream();
+          return spawned.stdout && mixed.add(spawned.stdout), spawned.stderr && mixed.add(spawned.stderr), 
+          mixed;
+        },
+        getSpawnedResult: async ({stdout, stderr, all}, {encoding, buffer, maxBuffer}, processDone) => {
+          const stdoutPromise = getStreamPromise(stdout, {
+            encoding,
+            buffer,
+            maxBuffer
+          }), stderrPromise = getStreamPromise(stderr, {
+            encoding,
+            buffer,
+            maxBuffer
+          }), allPromise = getStreamPromise(all, {
+            encoding,
+            buffer,
+            maxBuffer: 2 * maxBuffer
+          });
+          try {
+            return await Promise.all([ processDone, stdoutPromise, stderrPromise, allPromise ]);
+          } catch (error) {
+            return Promise.all([ {
+              error,
+              signal: error.signal,
+              timedOut: error.timedOut
+            }, getBufferedData(stdout, stdoutPromise), getBufferedData(stderr, stderrPromise), getBufferedData(all, allPromise) ]);
+          }
+        },
+        validateInputSync: ({input}) => {
+          if (isStream(input)) throw new TypeError("The `input` option cannot be a stream in sync mode");
+        }
       };
     },
     7749: (__unused_webpack_module, exports, __webpack_require__) => {
@@ -1849,54 +1640,65 @@
       module.exports = rimraf, rimraf.sync = rimrafSync;
     },
     5105: (module, __unused_webpack_exports, __webpack_require__) => {
-      const {PassThrough} = __webpack_require__(2781);
+      const {PassThrough: PassThroughStream} = __webpack_require__(2781);
       module.exports = options => {
-        options = Object.assign({}, options);
+        options = {
+          ...options
+        };
         const {array} = options;
         let {encoding} = options;
-        const buffer = "buffer" === encoding;
+        const isBuffer = "buffer" === encoding;
         let objectMode = !1;
-        array ? objectMode = !(encoding || buffer) : encoding = encoding || "utf8", buffer && (encoding = null);
-        let len = 0;
-        const ret = [], stream = new PassThrough({
+        array ? objectMode = !(encoding || isBuffer) : encoding = encoding || "utf8", isBuffer && (encoding = null);
+        const stream = new PassThroughStream({
           objectMode
         });
-        return encoding && stream.setEncoding(encoding), stream.on("data", (chunk => {
-          ret.push(chunk), objectMode ? len = ret.length : len += chunk.length;
-        })), stream.getBufferedValue = () => array ? ret : buffer ? Buffer.concat(ret, len) : ret.join(""), 
-        stream.getBufferedLength = () => len, stream;
+        encoding && stream.setEncoding(encoding);
+        let length = 0;
+        const chunks = [];
+        return stream.on("data", (chunk => {
+          chunks.push(chunk), objectMode ? length = chunks.length : length += chunk.length;
+        })), stream.getBufferedValue = () => array ? chunks : isBuffer ? Buffer.concat(chunks, length) : chunks.join(""), 
+        stream.getBufferedLength = () => length, stream;
       };
     },
     31: (module, __unused_webpack_exports, __webpack_require__) => {
-      const pump = __webpack_require__(5846), bufferStream = __webpack_require__(5105);
+      const {constants: BufferConstants} = __webpack_require__(4300), stream = __webpack_require__(2781), {promisify} = __webpack_require__(3837), bufferStream = __webpack_require__(5105), streamPipelinePromisified = promisify(stream.pipeline);
       class MaxBufferError extends Error {
         constructor() {
           super("maxBuffer exceeded"), this.name = "MaxBufferError";
         }
       }
-      function getStream(inputStream, options) {
-        if (!inputStream) return Promise.reject(new Error("Expected a stream"));
-        options = Object.assign({
-          maxBuffer: 1 / 0
-        }, options);
-        const {maxBuffer} = options;
-        let stream;
-        return new Promise(((resolve, reject) => {
+      async function getStream(inputStream, options) {
+        if (!inputStream) throw new Error("Expected a stream");
+        options = {
+          maxBuffer: 1 / 0,
+          ...options
+        };
+        const {maxBuffer} = options, stream = bufferStream(options);
+        return await new Promise(((resolve, reject) => {
           const rejectPromise = error => {
-            error && (error.bufferedData = stream.getBufferedValue()), reject(error);
+            error && stream.getBufferedLength() <= BufferConstants.MAX_LENGTH && (error.bufferedData = stream.getBufferedValue()), 
+            reject(error);
           };
-          stream = pump(inputStream, bufferStream(options), (error => {
-            error ? rejectPromise(error) : resolve();
-          })), stream.on("data", (() => {
+          (async () => {
+            try {
+              await streamPipelinePromisified(inputStream, stream), resolve();
+            } catch (error) {
+              rejectPromise(error);
+            }
+          })(), stream.on("data", (() => {
             stream.getBufferedLength() > maxBuffer && rejectPromise(new MaxBufferError);
           }));
-        })).then((() => stream.getBufferedValue()));
+        })), stream.getBufferedValue();
       }
-      module.exports = getStream, module.exports.buffer = (stream, options) => getStream(stream, Object.assign({}, options, {
+      module.exports = getStream, module.exports.buffer = (stream, options) => getStream(stream, {
+        ...options,
         encoding: "buffer"
-      })), module.exports.array = (stream, options) => getStream(stream, Object.assign({}, options, {
+      }), module.exports.array = (stream, options) => getStream(stream, {
+        ...options,
         array: !0
-      })), module.exports.MaxBufferError = MaxBufferError;
+      }), module.exports.MaxBufferError = MaxBufferError;
     },
     6560: module => {
       module.exports = (flag, argv = process.argv) => {
@@ -1904,88 +1706,345 @@
         return -1 !== position && (-1 === terminatorPosition || position < terminatorPosition);
       };
     },
+    7: (__unused_webpack_module, exports) => {
+      Object.defineProperty(exports, "__esModule", {
+        value: !0
+      }), exports.SIGNALS = void 0;
+      exports.SIGNALS = [ {
+        name: "SIGHUP",
+        number: 1,
+        action: "terminate",
+        description: "Terminal closed",
+        standard: "posix"
+      }, {
+        name: "SIGINT",
+        number: 2,
+        action: "terminate",
+        description: "User interruption with CTRL-C",
+        standard: "ansi"
+      }, {
+        name: "SIGQUIT",
+        number: 3,
+        action: "core",
+        description: "User interruption with CTRL-\\",
+        standard: "posix"
+      }, {
+        name: "SIGILL",
+        number: 4,
+        action: "core",
+        description: "Invalid machine instruction",
+        standard: "ansi"
+      }, {
+        name: "SIGTRAP",
+        number: 5,
+        action: "core",
+        description: "Debugger breakpoint",
+        standard: "posix"
+      }, {
+        name: "SIGABRT",
+        number: 6,
+        action: "core",
+        description: "Aborted",
+        standard: "ansi"
+      }, {
+        name: "SIGIOT",
+        number: 6,
+        action: "core",
+        description: "Aborted",
+        standard: "bsd"
+      }, {
+        name: "SIGBUS",
+        number: 7,
+        action: "core",
+        description: "Bus error due to misaligned, non-existing address or paging error",
+        standard: "bsd"
+      }, {
+        name: "SIGEMT",
+        number: 7,
+        action: "terminate",
+        description: "Command should be emulated but is not implemented",
+        standard: "other"
+      }, {
+        name: "SIGFPE",
+        number: 8,
+        action: "core",
+        description: "Floating point arithmetic error",
+        standard: "ansi"
+      }, {
+        name: "SIGKILL",
+        number: 9,
+        action: "terminate",
+        description: "Forced termination",
+        standard: "posix",
+        forced: !0
+      }, {
+        name: "SIGUSR1",
+        number: 10,
+        action: "terminate",
+        description: "Application-specific signal",
+        standard: "posix"
+      }, {
+        name: "SIGSEGV",
+        number: 11,
+        action: "core",
+        description: "Segmentation fault",
+        standard: "ansi"
+      }, {
+        name: "SIGUSR2",
+        number: 12,
+        action: "terminate",
+        description: "Application-specific signal",
+        standard: "posix"
+      }, {
+        name: "SIGPIPE",
+        number: 13,
+        action: "terminate",
+        description: "Broken pipe or socket",
+        standard: "posix"
+      }, {
+        name: "SIGALRM",
+        number: 14,
+        action: "terminate",
+        description: "Timeout or timer",
+        standard: "posix"
+      }, {
+        name: "SIGTERM",
+        number: 15,
+        action: "terminate",
+        description: "Termination",
+        standard: "ansi"
+      }, {
+        name: "SIGSTKFLT",
+        number: 16,
+        action: "terminate",
+        description: "Stack is empty or overflowed",
+        standard: "other"
+      }, {
+        name: "SIGCHLD",
+        number: 17,
+        action: "ignore",
+        description: "Child process terminated, paused or unpaused",
+        standard: "posix"
+      }, {
+        name: "SIGCLD",
+        number: 17,
+        action: "ignore",
+        description: "Child process terminated, paused or unpaused",
+        standard: "other"
+      }, {
+        name: "SIGCONT",
+        number: 18,
+        action: "unpause",
+        description: "Unpaused",
+        standard: "posix",
+        forced: !0
+      }, {
+        name: "SIGSTOP",
+        number: 19,
+        action: "pause",
+        description: "Paused",
+        standard: "posix",
+        forced: !0
+      }, {
+        name: "SIGTSTP",
+        number: 20,
+        action: "pause",
+        description: 'Paused using CTRL-Z or "suspend"',
+        standard: "posix"
+      }, {
+        name: "SIGTTIN",
+        number: 21,
+        action: "pause",
+        description: "Background process cannot read terminal input",
+        standard: "posix"
+      }, {
+        name: "SIGBREAK",
+        number: 21,
+        action: "terminate",
+        description: "User interruption with CTRL-BREAK",
+        standard: "other"
+      }, {
+        name: "SIGTTOU",
+        number: 22,
+        action: "pause",
+        description: "Background process cannot write to terminal output",
+        standard: "posix"
+      }, {
+        name: "SIGURG",
+        number: 23,
+        action: "ignore",
+        description: "Socket received out-of-band data",
+        standard: "bsd"
+      }, {
+        name: "SIGXCPU",
+        number: 24,
+        action: "core",
+        description: "Process timed out",
+        standard: "bsd"
+      }, {
+        name: "SIGXFSZ",
+        number: 25,
+        action: "core",
+        description: "File too big",
+        standard: "bsd"
+      }, {
+        name: "SIGVTALRM",
+        number: 26,
+        action: "terminate",
+        description: "Timeout or timer",
+        standard: "bsd"
+      }, {
+        name: "SIGPROF",
+        number: 27,
+        action: "terminate",
+        description: "Timeout or timer",
+        standard: "bsd"
+      }, {
+        name: "SIGWINCH",
+        number: 28,
+        action: "ignore",
+        description: "Terminal window size changed",
+        standard: "bsd"
+      }, {
+        name: "SIGIO",
+        number: 29,
+        action: "terminate",
+        description: "I/O is available",
+        standard: "other"
+      }, {
+        name: "SIGPOLL",
+        number: 29,
+        action: "terminate",
+        description: "Watched event",
+        standard: "other"
+      }, {
+        name: "SIGINFO",
+        number: 29,
+        action: "ignore",
+        description: "Request for process information",
+        standard: "other"
+      }, {
+        name: "SIGPWR",
+        number: 30,
+        action: "terminate",
+        description: "Device running out of power",
+        standard: "systemv"
+      }, {
+        name: "SIGSYS",
+        number: 31,
+        action: "core",
+        description: "Invalid system call",
+        standard: "other"
+      }, {
+        name: "SIGUNUSED",
+        number: 31,
+        action: "terminate",
+        description: "Invalid system call",
+        standard: "other"
+      } ];
+    },
+    7787: (__unused_webpack_module, exports, __webpack_require__) => {
+      Object.defineProperty(exports, "__esModule", {
+        value: !0
+      }), exports.signalsByNumber = exports.signalsByName = void 0;
+      var _os = __webpack_require__(2037), _signals = __webpack_require__(8699), _realtime = __webpack_require__(7603);
+      const getSignalByName = function(signalByNameMemo, {name, number, description, supported, action, forced, standard}) {
+        return {
+          ...signalByNameMemo,
+          [name]: {
+            name,
+            number,
+            description,
+            supported,
+            action,
+            forced,
+            standard
+          }
+        };
+      }, signalsByName = (0, _signals.getSignals)().reduce(getSignalByName, {});
+      exports.signalsByName = signalsByName;
+      const getSignalByNumber = function(number, signals) {
+        const signal = findSignalByNumber(number, signals);
+        if (void 0 === signal) return {};
+        const {name, description, supported, action, forced, standard} = signal;
+        return {
+          [number]: {
+            name,
+            number,
+            description,
+            supported,
+            action,
+            forced,
+            standard
+          }
+        };
+      }, findSignalByNumber = function(number, signals) {
+        const signal = signals.find((({name}) => _os.constants.signals[name] === number));
+        return void 0 !== signal ? signal : signals.find((signalA => signalA.number === number));
+      }, signalsByNumber = function() {
+        const signals = (0, _signals.getSignals)(), length = _realtime.SIGRTMAX + 1, signalsA = Array.from({
+          length
+        }, ((value, number) => getSignalByNumber(number, signals)));
+        return Object.assign({}, ...signalsA);
+      }();
+      exports.signalsByNumber = signalsByNumber;
+    },
+    7603: (__unused_webpack_module, exports) => {
+      Object.defineProperty(exports, "__esModule", {
+        value: !0
+      }), exports.SIGRTMAX = exports.getRealtimeSignals = void 0;
+      exports.getRealtimeSignals = function() {
+        const length = SIGRTMAX - SIGRTMIN + 1;
+        return Array.from({
+          length
+        }, getRealtimeSignal);
+      };
+      const getRealtimeSignal = function(value, index) {
+        return {
+          name: `SIGRT${index + 1}`,
+          number: SIGRTMIN + index,
+          action: "terminate",
+          description: "Application-specific signal (realtime)",
+          standard: "posix"
+        };
+      }, SIGRTMIN = 34, SIGRTMAX = 64;
+      exports.SIGRTMAX = SIGRTMAX;
+    },
+    8699: (__unused_webpack_module, exports, __webpack_require__) => {
+      Object.defineProperty(exports, "__esModule", {
+        value: !0
+      }), exports.getSignals = void 0;
+      var _os = __webpack_require__(2037), _core = __webpack_require__(7), _realtime = __webpack_require__(7603);
+      exports.getSignals = function() {
+        const realtimeSignals = (0, _realtime.getRealtimeSignals)();
+        return [ ..._core.SIGNALS, ...realtimeSignals ].map(normalizeSignal);
+      };
+      const normalizeSignal = function({name, number: defaultNumber, description, action, forced = !1, standard}) {
+        const {signals: {[name]: constantSignal}} = _os.constants, supported = void 0 !== constantSignal;
+        return {
+          name,
+          number: supported ? constantSignal : defaultNumber,
+          description,
+          supported,
+          action,
+          forced,
+          standard
+        };
+      };
+    },
     5131: module => {
       module.exports = ({stream = process.stdout} = {}) => Boolean(stream && stream.isTTY && "dumb" !== process.env.TERM && !("CI" in process.env));
     },
     4970: module => {
-      var isStream = module.exports = function(stream) {
-        return null !== stream && "object" == typeof stream && "function" == typeof stream.pipe;
-      };
-      isStream.writable = function(stream) {
-        return isStream(stream) && !1 !== stream.writable && "function" == typeof stream._write && "object" == typeof stream._writableState;
-      }, isStream.readable = function(stream) {
-        return isStream(stream) && !1 !== stream.readable && "function" == typeof stream._read && "object" == typeof stream._readableState;
-      }, isStream.duplex = function(stream) {
-        return isStream.writable(stream) && isStream.readable(stream);
-      }, isStream.transform = function(stream) {
-        return isStream.duplex(stream) && "function" == typeof stream._transform && "object" == typeof stream._transformState;
-      };
+      const isStream = stream => null !== stream && "object" == typeof stream && "function" == typeof stream.pipe;
+      isStream.writable = stream => isStream(stream) && !1 !== stream.writable && "function" == typeof stream._write && "object" == typeof stream._writableState, 
+      isStream.readable = stream => isStream(stream) && !1 !== stream.readable && "function" == typeof stream._read && "object" == typeof stream._readableState, 
+      isStream.duplex = stream => isStream.writable(stream) && isStream.readable(stream), 
+      isStream.transform = stream => isStream.duplex(stream) && "function" == typeof stream._transform && "object" == typeof stream._transformState, 
+      module.exports = isStream;
     },
     4500: module => {
       module.exports = () => "win32" !== process.platform || (Boolean(process.env.CI) || Boolean(process.env.WT_SESSION) || "vscode" === process.env.TERM_PROGRAM || "xterm-256color" === process.env.TERM || "alacritty" === process.env.TERM);
-    },
-    1391: module => {
-      const {FORCE_COLOR, NODE_DISABLE_COLORS, TERM} = process.env, $ = {
-        enabled: !NODE_DISABLE_COLORS && "dumb" !== TERM && "0" !== FORCE_COLOR,
-        reset: init(0, 0),
-        bold: init(1, 22),
-        dim: init(2, 22),
-        italic: init(3, 23),
-        underline: init(4, 24),
-        inverse: init(7, 27),
-        hidden: init(8, 28),
-        strikethrough: init(9, 29),
-        black: init(30, 39),
-        red: init(31, 39),
-        green: init(32, 39),
-        yellow: init(33, 39),
-        blue: init(34, 39),
-        magenta: init(35, 39),
-        cyan: init(36, 39),
-        white: init(37, 39),
-        gray: init(90, 39),
-        grey: init(90, 39),
-        bgBlack: init(40, 49),
-        bgRed: init(41, 49),
-        bgGreen: init(42, 49),
-        bgYellow: init(43, 49),
-        bgBlue: init(44, 49),
-        bgMagenta: init(45, 49),
-        bgCyan: init(46, 49),
-        bgWhite: init(47, 49)
-      };
-      function run(arr, str) {
-        let tmp, i = 0, beg = "", end = "";
-        for (;i < arr.length; i++) tmp = arr[i], beg += tmp.open, end += tmp.close, str.includes(tmp.close) && (str = str.replace(tmp.rgx, tmp.close + tmp.open));
-        return beg + str + end;
-      }
-      function init(open, close) {
-        let blk = {
-          open: `[${open}m`,
-          close: `[${close}m`,
-          rgx: new RegExp(`\\x1b\\[${close}m`, "g")
-        };
-        return function(txt) {
-          return void 0 !== this && void 0 !== this.has ? (this.has.includes(open) || (this.has.push(open), 
-          this.keys.push(blk)), void 0 === txt ? this : $.enabled ? run(this.keys, txt + "") : txt + "") : void 0 === txt ? function(has, keys) {
-            let ctx = {
-              has,
-              keys
-            };
-            return ctx.reset = $.reset.bind(ctx), ctx.bold = $.bold.bind(ctx), ctx.dim = $.dim.bind(ctx), 
-            ctx.italic = $.italic.bind(ctx), ctx.underline = $.underline.bind(ctx), ctx.inverse = $.inverse.bind(ctx), 
-            ctx.hidden = $.hidden.bind(ctx), ctx.strikethrough = $.strikethrough.bind(ctx), 
-            ctx.black = $.black.bind(ctx), ctx.red = $.red.bind(ctx), ctx.green = $.green.bind(ctx), 
-            ctx.yellow = $.yellow.bind(ctx), ctx.blue = $.blue.bind(ctx), ctx.magenta = $.magenta.bind(ctx), 
-            ctx.cyan = $.cyan.bind(ctx), ctx.white = $.white.bind(ctx), ctx.gray = $.gray.bind(ctx), 
-            ctx.grey = $.grey.bind(ctx), ctx.bgBlack = $.bgBlack.bind(ctx), ctx.bgRed = $.bgRed.bind(ctx), 
-            ctx.bgGreen = $.bgGreen.bind(ctx), ctx.bgYellow = $.bgYellow.bind(ctx), ctx.bgBlue = $.bgBlue.bind(ctx), 
-            ctx.bgMagenta = $.bgMagenta.bind(ctx), ctx.bgCyan = $.bgCyan.bind(ctx), ctx.bgWhite = $.bgWhite.bind(ctx), 
-            ctx;
-          }([ open ], [ blk ]) : $.enabled ? run([ blk ], txt + "") : txt + "";
-        };
-      }
-      module.exports = $;
     },
     6401: (module, __unused_webpack_exports, __webpack_require__) => {
       const path = __webpack_require__(1017), fs = __webpack_require__(7147), {promisify} = __webpack_require__(3837), pLocate = __webpack_require__(1885), fsStat = promisify(fs.stat), fsLStat = promisify(fs.lstat), typeMappings = {
@@ -2040,6 +2099,31 @@
       };
       module.exports = isUnicodeSupported() ? main : fallback;
     },
+    4034: (module, __unused_webpack_exports, __webpack_require__) => {
+      const {PassThrough} = __webpack_require__(2781);
+      module.exports = function() {
+        var sources = [], output = new PassThrough({
+          objectMode: !0
+        });
+        return output.setMaxListeners(0), output.add = add, output.isEmpty = isEmpty, output.on("unpipe", remove), 
+        Array.prototype.slice.call(arguments).forEach(add), output;
+        function add(source) {
+          return Array.isArray(source) ? (source.forEach(add), this) : (sources.push(source), 
+          source.once("end", remove.bind(null, source)), source.once("error", output.emit.bind(output, "error")), 
+          source.pipe(output, {
+            end: !1
+          }), this);
+        }
+        function isEmpty() {
+          return 0 == sources.length;
+        }
+        function remove(source) {
+          !(sources = sources.filter((function(it) {
+            return it !== source;
+          }))).length && output.readable && output.end();
+        }
+      };
+    },
     4341: module => {
       const mimicFn = (to, from) => {
         for (const prop of Reflect.ownKeys(from)) Object.defineProperty(to, prop, Object.getOwnPropertyDescriptor(from, prop));
@@ -2047,34 +2131,32 @@
       };
       module.exports = mimicFn, module.exports.default = mimicFn;
     },
-    1150: module => {
-      module.exports = function(fn) {
-        try {
-          return fn();
-        } catch (e) {}
-      };
-    },
     6147: (module, __unused_webpack_exports, __webpack_require__) => {
-      const path = __webpack_require__(1017), pathKey = __webpack_require__(3024);
-      module.exports = opts => {
-        let prev;
-        opts = Object.assign({
+      const path = __webpack_require__(1017), pathKey = __webpack_require__(3024), npmRunPath = options => {
+        let previous;
+        options = {
           cwd: process.cwd(),
-          path: process.env[pathKey()]
-        }, opts);
-        let pth = path.resolve(opts.cwd);
-        const ret = [];
-        for (;prev !== pth; ) ret.push(path.join(pth, "node_modules/.bin")), prev = pth, 
-        pth = path.resolve(pth, "..");
-        return ret.push(path.dirname(process.execPath)), ret.concat(opts.path).join(path.delimiter);
-      }, module.exports.env = opts => {
-        opts = Object.assign({
-          env: process.env
-        }, opts);
-        const env = Object.assign({}, opts.env), path = pathKey({
+          path: process.env[pathKey()],
+          execPath: process.execPath,
+          ...options
+        };
+        let cwdPath = path.resolve(options.cwd);
+        const result = [];
+        for (;previous !== cwdPath; ) result.push(path.join(cwdPath, "node_modules/.bin")), 
+        previous = cwdPath, cwdPath = path.resolve(cwdPath, "..");
+        const execPathDir = path.resolve(options.cwd, options.execPath, "..");
+        return result.push(execPathDir), result.concat(options.path).join(path.delimiter);
+      };
+      module.exports = npmRunPath, module.exports.default = npmRunPath, module.exports.env = options => {
+        const env = {
+          ...(options = {
+            env: process.env,
+            ...options
+          }).env
+        }, path = pathKey({
           env
         });
-        return opts.path = env[path], env[path] = module.exports(opts), env;
+        return options.path = env[path], env[path] = module.exports(options), env;
       };
     },
     7678: (module, __unused_webpack_exports, __webpack_require__) => {
@@ -2279,15 +2361,6 @@
         })(), spinner;
       };
     },
-    7345: module => {
-      module.exports = (promise, onFinally) => (onFinally = onFinally || (() => {}), promise.then((val => new Promise((resolve => {
-        resolve(onFinally());
-      })).then((() => val))), (err => new Promise((resolve => {
-        resolve(onFinally());
-      })).then((() => {
-        throw err;
-      })))));
-    },
     406: (module, __unused_webpack_exports, __webpack_require__) => {
       const pTry = __webpack_require__(9161), pLimit = concurrency => {
         if (!Number.isInteger(concurrency) && concurrency !== 1 / 0 || !(concurrency > 0)) return Promise.reject(new TypeError("Expected `concurrency` to be a number from 1 and up"));
@@ -2347,10 +2420,11 @@
       module.exports = pTry, module.exports.default = pTry;
     },
     3024: module => {
-      module.exports = opts => {
-        const env = (opts = opts || {}).env || process.env;
-        return "win32" !== (opts.platform || process.platform) ? "PATH" : Object.keys(env).find((x => "PATH" === x.toUpperCase())) || "Path";
+      const pathKey = (options = {}) => {
+        const environment = options.env || process.env;
+        return "win32" !== (options.platform || process.platform) ? "PATH" : Object.keys(environment).reverse().find((key => "PATH" === key.toUpperCase())) || "Path";
       };
+      module.exports = pathKey, module.exports.default = pathKey;
     },
     4012: module => {
       const codes = {};
@@ -2836,68 +2910,26 @@
       }));
     },
     2063: (module, __unused_webpack_exports, __webpack_require__) => {
-      var shebangRegex = __webpack_require__(9395);
-      module.exports = function(str) {
-        var match = str.match(shebangRegex);
+      const shebangRegex = __webpack_require__(9395);
+      module.exports = (string = "") => {
+        const match = string.match(shebangRegex);
         if (!match) return null;
-        var arr = match[0].replace(/#! ?/, "").split(" "), bin = arr[0].split("/").pop(), arg = arr[1];
-        return "env" === bin ? arg : bin + (arg ? " " + arg : "");
+        const [path, argument] = match[0].replace(/#! ?/, "").split(" "), binary = path.split("/").pop();
+        return "env" === binary ? argument : argument ? `${binary} ${argument}` : binary;
       };
     },
     9395: module => {
-      module.exports = /^#!.*/;
-    },
-    2698: module => {
-      const cursor = {
-        to: (x, y) => y ? `[${y + 1};${x + 1}H` : `[${x + 1}G`,
-        move(x, y) {
-          let ret = "";
-          return x < 0 ? ret += `[${-x}D` : x > 0 && (ret += `[${x}C`), y < 0 ? ret += `[${-y}A` : y > 0 && (ret += `[${y}B`), 
-          ret;
-        },
-        up: (count = 1) => `[${count}A`,
-        down: (count = 1) => `[${count}B`,
-        forward: (count = 1) => `[${count}C`,
-        backward: (count = 1) => `[${count}D`,
-        nextLine: (count = 1) => "[E".repeat(count),
-        prevLine: (count = 1) => "[F".repeat(count),
-        left: "[G",
-        hide: "[?25l",
-        show: "[?25h",
-        save: "7",
-        restore: "8"
-      }, scroll = {
-        up: (count = 1) => "[S".repeat(count),
-        down: (count = 1) => "[T".repeat(count)
-      }, erase = {
-        screen: "[2J",
-        up: (count = 1) => "[1J".repeat(count),
-        down: (count = 1) => "[J".repeat(count),
-        line: "[2K",
-        lineEnd: "[K",
-        lineStart: "[1K",
-        lines(count) {
-          let clear = "";
-          for (let i = 0; i < count; i++) clear += this.line + (i < count - 1 ? cursor.up() : "");
-          return count && (clear += cursor.left), clear;
-        }
-      };
-      module.exports = {
-        cursor,
-        scroll,
-        erase,
-        beep: ""
-      };
+      module.exports = /^#!(.*)/;
     },
     6003: (module, __unused_webpack_exports, __webpack_require__) => {
       const ansiRegex = __webpack_require__(4277);
       module.exports = string => "string" == typeof string ? string.replace(ansiRegex(), "") : string;
     },
-    4502: module => {
-      module.exports = function(x) {
-        var lf = "string" == typeof x ? "\n" : "\n".charCodeAt(), cr = "string" == typeof x ? "\r" : "\r".charCodeAt();
-        return x[x.length - 1] === lf && (x = x.slice(0, x.length - 1)), x[x.length - 1] === cr && (x = x.slice(0, x.length - 1)), 
-        x;
+    8150: module => {
+      module.exports = input => {
+        const LF = "string" == typeof input ? "\n" : "\n".charCodeAt(), CR = "string" == typeof input ? "\r" : "\r".charCodeAt();
+        return input[input.length - 1] === LF && (input = input.slice(0, input.length - 1)), 
+        input[input.length - 1] === CR && (input = input.slice(0, input.length - 1)), input;
       };
     },
     2130: (module, __unused_webpack_exports, __webpack_require__) => {
@@ -2961,44 +2993,6 @@
           value: fn.name
         });
       };
-    },
-    4420: (module, __unused_webpack_exports, __webpack_require__) => {
-      var once = __webpack_require__(9771), noop = function() {}, eos = function(stream, opts, callback) {
-        if ("function" == typeof opts) return eos(stream, null, opts);
-        opts || (opts = {}), callback = once(callback || noop);
-        var ws = stream._writableState, rs = stream._readableState, readable = opts.readable || !1 !== opts.readable && stream.readable, writable = opts.writable || !1 !== opts.writable && stream.writable, cancelled = !1, onlegacyfinish = function() {
-          stream.writable || onfinish();
-        }, onfinish = function() {
-          writable = !1, readable || callback.call(stream);
-        }, onend = function() {
-          readable = !1, writable || callback.call(stream);
-        }, onexit = function(exitCode) {
-          callback.call(stream, exitCode ? new Error("exited with error code: " + exitCode) : null);
-        }, onerror = function(err) {
-          callback.call(stream, err);
-        }, onclose = function() {
-          process.nextTick(onclosenexttick);
-        }, onclosenexttick = function() {
-          if (!cancelled) return (!readable || rs && rs.ended && !rs.destroyed) && (!writable || ws && ws.ended && !ws.destroyed) ? void 0 : callback.call(stream, new Error("premature close"));
-        }, onrequest = function() {
-          stream.req.on("finish", onfinish);
-        };
-        return !function(stream) {
-          return stream.setHeader && "function" == typeof stream.abort;
-        }(stream) ? writable && !ws && (stream.on("end", onlegacyfinish), stream.on("close", onlegacyfinish)) : (stream.on("complete", onfinish), 
-        stream.on("abort", onclose), stream.req ? onrequest() : stream.on("request", onrequest)), 
-        function(stream) {
-          return stream.stdio && Array.isArray(stream.stdio) && 3 === stream.stdio.length;
-        }(stream) && stream.on("exit", onexit), stream.on("end", onend), stream.on("finish", onfinish), 
-        !1 !== opts.error && stream.on("error", onerror), stream.on("close", onclose), function() {
-          cancelled = !0, stream.removeListener("complete", onfinish), stream.removeListener("abort", onclose), 
-          stream.removeListener("request", onrequest), stream.req && stream.req.removeListener("finish", onfinish), 
-          stream.removeListener("end", onlegacyfinish), stream.removeListener("close", onlegacyfinish), 
-          stream.removeListener("finish", onfinish), stream.removeListener("exit", onexit), 
-          stream.removeListener("end", onend), stream.removeListener("error", onerror), stream.removeListener("close", onclose);
-        };
-      };
-      module.exports = eos;
     },
     8236: module => {
       module.exports = function(obj) {
@@ -3494,77 +3488,6 @@
           cb(er, !er && checkStat(stat, path, options));
         }));
       }
-    },
-    9771: (module, __unused_webpack_exports, __webpack_require__) => {
-      var wrappy = __webpack_require__(2847);
-      function once(fn) {
-        var f = function() {
-          return f.called ? f.value : (f.called = !0, f.value = fn.apply(this, arguments));
-        };
-        return f.called = !1, f;
-      }
-      function onceStrict(fn) {
-        var f = function() {
-          if (f.called) throw new Error(f.onceError);
-          return f.called = !0, f.value = fn.apply(this, arguments);
-        }, name = fn.name || "Function wrapped with `once`";
-        return f.onceError = name + " shouldn't be called more than once", f.called = !1, 
-        f;
-      }
-      module.exports = wrappy(once), module.exports.strict = wrappy(onceStrict), once.proto = once((function() {
-        Object.defineProperty(Function.prototype, "once", {
-          value: function() {
-            return once(this);
-          },
-          configurable: !0
-        }), Object.defineProperty(Function.prototype, "onceStrict", {
-          value: function() {
-            return onceStrict(this);
-          },
-          configurable: !0
-        });
-      }));
-    },
-    5846: (module, __unused_webpack_exports, __webpack_require__) => {
-      var once = __webpack_require__(9771), eos = __webpack_require__(4420), fs = __webpack_require__(7147), noop = function() {}, ancient = /^v?\.0/.test(process.version), isFn = function(fn) {
-        return "function" == typeof fn;
-      }, destroyer = function(stream, reading, writing, callback) {
-        callback = once(callback);
-        var closed = !1;
-        stream.on("close", (function() {
-          closed = !0;
-        })), eos(stream, {
-          readable: reading,
-          writable: writing
-        }, (function(err) {
-          if (err) return callback(err);
-          closed = !0, callback();
-        }));
-        var destroyed = !1;
-        return function(err) {
-          if (!closed && !destroyed) return destroyed = !0, function(stream) {
-            return !!ancient && !!fs && (stream instanceof (fs.ReadStream || noop) || stream instanceof (fs.WriteStream || noop)) && isFn(stream.close);
-          }(stream) ? stream.close(noop) : function(stream) {
-            return stream.setHeader && isFn(stream.abort);
-          }(stream) ? stream.abort() : isFn(stream.destroy) ? stream.destroy() : void callback(err || new Error("stream was destroyed"));
-        };
-      }, call = function(fn) {
-        fn();
-      }, pipe = function(from, to) {
-        return from.pipe(to);
-      };
-      module.exports = function() {
-        var error, streams = Array.prototype.slice.call(arguments), callback = isFn(streams[streams.length - 1] || noop) && streams.pop() || noop;
-        if (Array.isArray(streams[0]) && (streams = streams[0]), streams.length < 2) throw new Error("pump requires two streams per minimum");
-        var destroys = streams.map((function(stream, i) {
-          var reading = i < streams.length - 1;
-          return destroyer(stream, reading, i > 0, (function(err) {
-            error || (error = err), err && destroys.forEach(call), reading || (destroys.forEach(call), 
-            callback(error));
-          }));
-        }));
-        return streams.reduce(pipe);
-      };
     },
     2079: (module, exports) => {
       var debug;
@@ -4520,14 +4443,44 @@
       }
     },
     566: (module, __unused_webpack_exports, __webpack_require__) => {
-      module.exports = which, which.sync = function(cmd, opt) {
-        for (var info = getPathInfo(cmd, opt = opt || {}), pathEnv = info.env, pathExt = info.ext, pathExtExe = info.extExe, found = [], i = 0, l = pathEnv.length; i < l; i++) {
-          var pathPart = pathEnv[i];
-          '"' === pathPart.charAt(0) && '"' === pathPart.slice(-1) && (pathPart = pathPart.slice(1, -1));
-          var p = path.join(pathPart, cmd);
-          !pathPart && /^\.[\\\/]/.test(cmd) && (p = cmd.slice(0, 2) + p);
-          for (var j = 0, ll = pathExt.length; j < ll; j++) {
-            var cur = p + pathExt[j];
+      const isWindows = "win32" === process.platform || "cygwin" === process.env.OSTYPE || "msys" === process.env.OSTYPE, path = __webpack_require__(1017), COLON = isWindows ? ";" : ":", isexe = __webpack_require__(8040), getNotFoundError = cmd => Object.assign(new Error(`not found: ${cmd}`), {
+        code: "ENOENT"
+      }), getPathInfo = (cmd, opt) => {
+        const colon = opt.colon || COLON, pathEnv = cmd.match(/\//) || isWindows && cmd.match(/\\/) ? [ "" ] : [ ...isWindows ? [ process.cwd() ] : [], ...(opt.path || process.env.PATH || "").split(colon) ], pathExtExe = isWindows ? opt.pathExt || process.env.PATHEXT || ".EXE;.CMD;.BAT;.COM" : "", pathExt = isWindows ? pathExtExe.split(colon) : [ "" ];
+        return isWindows && -1 !== cmd.indexOf(".") && "" !== pathExt[0] && pathExt.unshift(""), 
+        {
+          pathEnv,
+          pathExt,
+          pathExtExe
+        };
+      }, which = (cmd, opt, cb) => {
+        "function" == typeof opt && (cb = opt, opt = {}), opt || (opt = {});
+        const {pathEnv, pathExt, pathExtExe} = getPathInfo(cmd, opt), found = [], step = i => new Promise(((resolve, reject) => {
+          if (i === pathEnv.length) return opt.all && found.length ? resolve(found) : reject(getNotFoundError(cmd));
+          const ppRaw = pathEnv[i], pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw, pCmd = path.join(pathPart, cmd), p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd : pCmd;
+          resolve(subStep(p, i, 0));
+        })), subStep = (p, i, ii) => new Promise(((resolve, reject) => {
+          if (ii === pathExt.length) return resolve(step(i + 1));
+          const ext = pathExt[ii];
+          isexe(p + ext, {
+            pathExt: pathExtExe
+          }, ((er, is) => {
+            if (!er && is) {
+              if (!opt.all) return resolve(p + ext);
+              found.push(p + ext);
+            }
+            return resolve(subStep(p, i, ii + 1));
+          }));
+        }));
+        return cb ? step(0).then((res => cb(null, res)), cb) : step(0);
+      };
+      module.exports = which, which.sync = (cmd, opt) => {
+        opt = opt || {};
+        const {pathEnv, pathExt, pathExtExe} = getPathInfo(cmd, opt), found = [];
+        for (let i = 0; i < pathEnv.length; i++) {
+          const ppRaw = pathEnv[i], pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw, pCmd = path.join(pathPart, cmd), p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd : pCmd;
+          for (let j = 0; j < pathExt.length; j++) {
+            const cur = p + pathExt[j];
             try {
               if (isexe.sync(cur, {
                 pathExt: pathExtExe
@@ -4541,62 +4494,6 @@
         if (opt.all && found.length) return found;
         if (opt.nothrow) return null;
         throw getNotFoundError(cmd);
-      };
-      var isWindows = "win32" === process.platform || "cygwin" === process.env.OSTYPE || "msys" === process.env.OSTYPE, path = __webpack_require__(1017), COLON = isWindows ? ";" : ":", isexe = __webpack_require__(8040);
-      function getNotFoundError(cmd) {
-        var er = new Error("not found: " + cmd);
-        return er.code = "ENOENT", er;
-      }
-      function getPathInfo(cmd, opt) {
-        var colon = opt.colon || COLON, pathEnv = opt.path || process.env.PATH || "", pathExt = [ "" ];
-        pathEnv = pathEnv.split(colon);
-        var pathExtExe = "";
-        return isWindows && (pathEnv.unshift(process.cwd()), pathExt = (pathExtExe = opt.pathExt || process.env.PATHEXT || ".EXE;.CMD;.BAT;.COM").split(colon), 
-        -1 !== cmd.indexOf(".") && "" !== pathExt[0] && pathExt.unshift("")), (cmd.match(/\//) || isWindows && cmd.match(/\\/)) && (pathEnv = [ "" ]), 
-        {
-          env: pathEnv,
-          ext: pathExt,
-          extExe: pathExtExe
-        };
-      }
-      function which(cmd, opt, cb) {
-        "function" == typeof opt && (cb = opt, opt = {});
-        var info = getPathInfo(cmd, opt), pathEnv = info.env, pathExt = info.ext, pathExtExe = info.extExe, found = [];
-        !function F(i, l) {
-          if (i === l) return opt.all && found.length ? cb(null, found) : cb(getNotFoundError(cmd));
-          var pathPart = pathEnv[i];
-          '"' === pathPart.charAt(0) && '"' === pathPart.slice(-1) && (pathPart = pathPart.slice(1, -1));
-          var p = path.join(pathPart, cmd);
-          !pathPart && /^\.[\\\/]/.test(cmd) && (p = cmd.slice(0, 2) + p), function E(ii, ll) {
-            if (ii === ll) return F(i + 1, l);
-            var ext = pathExt[ii];
-            isexe(p + ext, {
-              pathExt: pathExtExe
-            }, (function(er, is) {
-              if (!er && is) {
-                if (!opt.all) return cb(null, p + ext);
-                found.push(p + ext);
-              }
-              return E(ii + 1, ll);
-            }));
-          }(0, pathExt.length);
-        }(0, pathEnv.length);
-      }
-    },
-    2847: module => {
-      module.exports = function wrappy(fn, cb) {
-        if (fn && cb) return wrappy(fn)(cb);
-        if ("function" != typeof fn) throw new TypeError("need wrapper function");
-        return Object.keys(fn).forEach((function(k) {
-          wrapper[k] = fn[k];
-        })), wrapper;
-        function wrapper() {
-          for (var args = new Array(arguments.length), i = 0; i < args.length; i++) args[i] = arguments[i];
-          var ret = fn.apply(this, args), cb = args[args.length - 1];
-          return "function" == typeof ret && ret !== cb && Object.keys(cb).forEach((function(k) {
-            ret[k] = cb[k];
-          })), ret;
-        }
       };
     },
     2415: (module, __unused_webpack_exports, __webpack_require__) => {
@@ -6337,7 +6234,7 @@
     },
     5478: module => {
       module.exports = {
-        i8: "10.2.2"
+        i8: "11.0.2"
       };
     }
   }, __webpack_module_cache__ = {};
@@ -6418,7 +6315,37 @@
         return this.text;
       }
     }
-    const NoopLoader = OraNoop;
+    const NoopLoader = OraNoop, os = __webpack_require__(2037), assert = __webpack_require__(9491);
+    let _version, _platform = "android";
+    function doclink(section, path, hashOrOverrides) {
+      const url = new URL("https://reactnative.dev/"), isObj = "object" == typeof hashOrOverrides, hash = isObj ? hashOrOverrides.hash : hashOrOverrides, version = isObj && hashOrOverrides.version ? hashOrOverrides.version : _version, OS = isObj && hashOrOverrides.os ? hashOrOverrides.os : function() {
+        switch (os.platform()) {
+         case "aix":
+         case "freebsd":
+         case "linux":
+         case "openbsd":
+         case "sunos":
+          return "linux";
+
+         case "darwin":
+          return "macos";
+
+         case "win32":
+          return "windows";
+
+         default:
+          return "";
+        }
+      }(), platform = isObj && hashOrOverrides.platform ? hashOrOverrides.platform : _platform;
+      if (url.pathname = _version ? `${section}/${version}/${path}` : `${section}/${path}`, 
+      url.searchParams.set("os", OS), url.searchParams.set("platform", platform), isObj) {
+        const otherKeys = Object.keys(hashOrOverrides).filter((key => ![ "hash", "version", "os", "platform" ].includes(key)));
+        for (let key of otherKeys) url.searchParams.set(key, hashOrOverrides[key]);
+      }
+      return hash && (assert.doesNotMatch(hash, /#/, "Anchor links should be written withou a '#'"), 
+      url.hash = hash), url.toString();
+    }
+    const docs = doclink.bind(null, "docs");
     class CLIError extends Error {
       constructor(msg, originalError) {
         super(inlineString(msg)), originalError ? this.stack = "string" == typeof originalError ? originalError : originalError.stack || "".split("\n").slice(0, 2).join("\n") : delete this.stack;
@@ -6642,7 +6569,7 @@
           packageName
         });
       } catch (error) {
-        throw new CLIError(error);
+        throw new CLIError(error.message);
       } else for (const filePath of tools_walk(process.cwd()).reverse()) shouldIgnoreFile(filePath) || ((await editTemplate_fs.stat(filePath)).isDirectory() || (await replaceNameInUTF8File(filePath, projectName, placeholderName), 
       await replaceNameInUTF8File(filePath, projectTitle, placeholderTitle)), shouldRenameFile(filePath, placeholderName) ? await renameFile(filePath, placeholderName, projectName) : shouldRenameFile(filePath, placeholderName.toLowerCase()) && await renameFile(filePath, placeholderName.toLowerCase(), projectName.toLowerCase()), 
       await processDotfiles(filePath));
@@ -6650,38 +6577,12 @@
     const runBundleInstall_execa = __webpack_require__(8468);
     const tools_runBundleInstall = async function(loader) {
       try {
-        loader.start("Installing Bundler"), await runBundleInstall_execa("bundle", [ "install" ]);
+        loader.start("Installing Ruby Gems"), await runBundleInstall_execa("bundle", [ "install" ]);
       } catch (error) {
-        throw loader.fail(), logger_error(error.stderr || error.stdout), new Error("Looks like your iOS environment is not properly set. Please go to https://reactnative.dev/docs/next/environment-setup and follow the React Native CLI QuickStart guide for macOS and iOS.");
+        throw loader.fail(), logger_error(error.stderr || error.stdout), new CLIError(`Looks like your iOS environment is not properly set. Please go to ${docs("environment-setup")} and follow the React Native CLI QuickStart guide for macOS and iOS.`);
       }
       loader.succeed();
-    }, common_chalk = __webpack_require__(4061), logMessage = (__webpack_require__(4521), 
-    __webpack_require__(2774), __webpack_require__(6003), message => {
-      if ("string" != typeof message) return void logger_log();
-      const messageByLine = message.split("\n");
-      return logger_log(`   ${messageByLine.join("\n   ")}`);
-    }), addBlankLine = () => logMessage();
-    const brewInstall_execa = __webpack_require__(8468);
-    async function brewInstall({pkg, label, loader, onSuccess, onFail}) {
-      loader.start(label);
-      try {
-        return await brewInstall_execa("brew", [ "install", pkg ]), "function" == typeof onSuccess ? onSuccess() : loader.succeed();
-      } catch (error) {
-        if ("function" == typeof onFail) return onFail();
-        (({healthcheck, loader, error, message, command}) => {
-          if (loader && loader.fail(), addBlankLine(), logMessage(common_chalk.dim(error.message)), 
-          message) return logMessage(message), void addBlankLine();
-          logMessage(`The error above occured while trying to install ${healthcheck}. Please try again manually: ${common_chalk.bold(command)}`), 
-          addBlankLine();
-        })({
-          healthcheck: label || pkg,
-          loader,
-          error,
-          command: `brew install ${pkg}`
-        });
-      }
-    }
-    const installPods_fs = __webpack_require__(7147), installPods_execa = __webpack_require__(8468), installPods_chalk = __webpack_require__(4061), prompts = __webpack_require__(1954), sudo = __webpack_require__(5046);
+    }, installPods_fs = __webpack_require__(7147), installPods_execa = __webpack_require__(8468), installPods_chalk = __webpack_require__(4061), sudo = __webpack_require__(5046);
     async function runPodInstall(loader, directory, shouldHandleRepoUpdate = !0) {
       try {
         loader.start(`Installing CocoaPods dependencies ${installPods_chalk.dim("(this may take a few minutes)")}`), 
@@ -6689,13 +6590,13 @@
       } catch (error) {
         const stderr = error.stderr || error.stdout;
         if (!stderr.includes("pod repo update") || !shouldHandleRepoUpdate) throw loader.fail(), 
-        logger_error(stderr), new Error("Looks like your iOS environment is not properly set. Please go to https://reactnative.dev/docs/next/environment-setup and follow the React Native CLI QuickStart guide for macOS and iOS.");
+        logger_error(stderr), new CLIError(`Looks like your iOS environment is not properly set. Please go to ${docs("environment-setup")} and follow the React Native CLI QuickStart guide for macOS and iOS.`);
         await async function(loader) {
           try {
             loader.start(`Updating CocoaPods repositories ${installPods_chalk.dim("(this may take a few minutes)")}`), 
             await installPods_execa("pod", [ "repo", "update" ]);
           } catch (error) {
-            throw logger_log(error.stderr || error.stdout), loader.fail(), new Error(`Failed to update CocoaPods repositories for iOS project.\nPlease try again manually: "pod repo update".\nCocoaPods documentation: ${installPods_chalk.dim.underline("https://cocoapods.org/")}`);
+            throw logger_log(error.stderr || error.stdout), loader.fail(), new CLIError(`Failed to update CocoaPods repositories for iOS project.\nPlease try again manually: "pod repo update".\nCocoaPods documentation: ${installPods_chalk.dim.underline("https://cocoapods.org/")}`);
           }
         }(loader), await runPodInstall(loader, directory, !1);
       }
@@ -6715,40 +6616,6 @@
       }
       var command;
     }
-    async function installCocoaPods(loader) {
-      loader.stop();
-      const {installMethod} = await async function() {
-        const promptQuestion = `CocoaPods ${installPods_chalk.dim.underline("(https://cocoapods.org/)")} ${installPods_chalk.reset.bold("is not installed. CocoaPods is necessary for the iOS project to run correctly. Do you want to install it?")}`, {installMethod} = await prompts([ {
-          type: "select",
-          name: "installMethod",
-          message: promptQuestion,
-          choices: [ {
-            title: "Yes, with gem (may require sudo)",
-            value: "gem"
-          }, {
-            title: "Yes, with Homebrew",
-            value: "homebrew"
-          } ]
-        } ]);
-        return {
-          installMethod,
-          promptQuestion: `? ${promptQuestion} ${"gem" === installMethod ? "Yes, with gem (may require sudo)" : "Yes, with Homebrew"}`
-        };
-      }();
-      if ("gem" === installMethod) {
-        loader.start("Installing CocoaPods");
-        try {
-          return await installCocoaPodsWithGem(), loader.succeed();
-        } catch (error) {
-          throw loader.fail(), logger_error(error.stderr), new Error(`An error occured while trying to install CocoaPods, which is required by this template.\nPlease try again manually: sudo gem install cocoapods.\nCocoaPods documentation: ${installPods_chalk.dim.underline("https://cocoapods.org/")}`);
-        }
-      }
-      if ("homebrew" === installMethod) return await brewInstall({
-        pkg: "cocoapods",
-        label: "Installing CocoaPods",
-        loader
-      });
-    }
     const tools_installPods = async function({directory, loader}) {
       loader = loader || new NoopLoader;
       try {
@@ -6759,7 +6626,14 @@
         try {
           await installPods_execa("pod", [ "--version" ]);
         } catch (e) {
-          loader.info(), await installCocoaPods(loader);
+          loader.info(), await async function(loader) {
+            loader.stop(), loader.start("Installing CocoaPods");
+            try {
+              return await installCocoaPodsWithGem(), loader.succeed();
+            } catch (error) {
+              throw loader.fail(), logger_error(error.stderr), new CLIError(`An error occured while trying to install CocoaPods, which is required by this template.\nPlease try again manually: sudo gem install cocoapods.\nCocoaPods documentation: ${installPods_chalk.dim.underline("https://cocoapods.org/")}`);
+            }
+          }(loader);
         }
         await runPodInstall(loader, directory);
       } finally {
@@ -6771,7 +6645,7 @@
         super(`Passing both "version" and "template" is not supported. The template you select determines the version of react-native used. Please use only one of these options, for example:\n      \n      --template ${template}@x.y.z\n      \n      where x.y.z is the release of the template that contains the desired "react-native" version. Check the version tab of https://www.npmjs.com/package/${template} for available versions`);
       }
     }
-    const os = __webpack_require__(2037), init_path = __webpack_require__(1017), init_fs = __webpack_require__(4489);
+    const init_os = __webpack_require__(2037), init_path = __webpack_require__(1017), init_fs = __webpack_require__(4489);
     async function setProjectDirectory(directory) {
       if (dir = directory, init_fs.existsSync(dir)) throw new DirectoryAlreadyExistsError(directory);
       var dir;
@@ -6790,7 +6664,7 @@
         text: "Downloading template"
       }, logger_isVerbose() ? new OraNoop : ora(options));
       var options;
-      const templateSourceDir = init_fs.mkdtempSync(init_path.join(os.tmpdir(), "rncli-init-template-"));
+      const templateSourceDir = init_fs.mkdtempSync(init_path.join(init_os.tmpdir(), "rncli-init-template-"));
       try {
         loader.start(), await installTemplatePackage(templateUri, templateSourceDir, npm), 
         loader.succeed(), loader.start("Copying template");
@@ -6840,7 +6714,7 @@
           directory
         });
       } catch (e) {
-        throw loader.fail(), new Error(e);
+        throw loader.fail(), e;
       } finally {
         init_fs.removeSync(templateSourceDir);
       }
@@ -6907,11 +6781,19 @@
       err.stack && logger_log(err.stack), program.opts().verbose || logger_info(src_chalk.dim(`Run CLI with ${src_chalk.reset("--verbose")} ${src_chalk.dim("flag for more details.")}`)), 
       process.exit(1);
     };
-    function attachCommand(command, ...rest) {
+    function isDetachedCommand(command) {
+      return !0 === command.detached;
+    }
+    function attachCommand(command, config) {
       const cmd = program.action((async function(...args) {
         const passedOptions = this.opts(), argv = Array.from(args).slice(0, -1);
         try {
-          (command => !0 === command.detached)(command) ? await command.func(argv, passedOptions) : await command.func(argv, rest[0], passedOptions);
+          if (isDetachedCommand(command)) await command.func(argv, passedOptions, config); else {
+            if (!function(command) {
+              return !isDetachedCommand(command);
+            }(command)) throw new Error("A command must be either attached or detached");
+            await command.func(argv, config, passedOptions);
+          }
         } catch (error) {
           handleError(error);
         }
@@ -6927,7 +6809,7 @@
       }(command.examples));
       for (const opt of command.options || []) {
         var _opt$description;
-        cmd.option(opt.name, null !== (_opt$description = opt.description) && void 0 !== _opt$description ? _opt$description : "", opt.parse || (val => val), "function" == typeof opt.default ? opt.default(rest[0]) : opt.default);
+        cmd.option(opt.name, null !== (_opt$description = opt.description) && void 0 !== _opt$description ? _opt$description : "", opt.parse || (val => val), "function" == typeof opt.default ? opt.default(config) : opt.default);
       }
     }
     const bin_semver = __webpack_require__(2079), bin_chalk = __webpack_require__(4061), versionRanges = {
@@ -6937,7 +6819,7 @@
       try {
         await async function() {
           logger_setVerbose(process.argv.includes("--verbose"));
-          for (const command of detachedCommands) attachCommand(command);
+          for (const command of detachedCommands) attachCommand(command, void 0);
           program.parse(process.argv);
         }();
       } catch (e) {

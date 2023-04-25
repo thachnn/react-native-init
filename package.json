@@ -1,6 +1,6 @@
 {
   "name": "react-native-init",
-  "version": "10.2.2",
+  "version": "11.0.2",
   "description": "Bundle React Native CLI into a command line tool to create React Native apps",
   "license": "MIT",
   "bin": "index.js",
